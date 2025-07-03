@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "211990709841",
+    "project_id": "video-downloader-for-x-2a20f",
+    "storage_bucket": "video-downloader-for-x-2a20f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:211990709841:android:ef87d5c0abc23e9de75a70",
+        "android_client_info": {
+          "package_name": "com.x.twitter.video.downloader"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBeKPB4R5wrZIAIl47ERQuPcWVajW0ufBA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

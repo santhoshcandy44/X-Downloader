@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/color_primary_dark"
+        android:id="@+id/status_bar"
+        android:orientation="horizontal"
+        />
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:id="@+id/top_bar"
+    android:layout_below="@id/status_bar"
+    >
+
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/app_bar"
+        >
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="horizontal"
+            android:id="@+id/app_title"
+            android:layout_marginVertical="4dp"
+            android:visibility="gone"
+
+            >
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="X"
+                android:textSize="32sp"
+                android:textAllCaps="true"
+                android:textColor="@color/color_primary"
+
+                />
+
+            <View
+                android:layout_width="8dp"
+                android:layout_height="0dp"
+
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="Monkey"
+                android:textSize="32sp"
+                android:textColor="@color/black"
+                android:textAllCaps="true"
+                />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="horizontal"
+            android:id="@+id/all_downloads_bar"
+            android:visibility="gone"
+            android:layout_marginVertical="4dp"
+
+            >
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="All Downloads"
+                android:textSize="32sp"
+                android:textAllCaps="true"
+                android:textColor="@color/black"
+
+                />
+
+
+
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="horizontal"
+            android:id="@+id/more_bar"
+            android:visibility="gone"
+            android:layout_marginVertical="4dp"
+
+
+            >
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="More"
+                android:textSize="32sp"
+                android:textAllCaps="true"
+                android:textColor="@color/black"
+
+                />
+
+        </LinearLayout>
+
+
+
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/update_info_container"
+        >
+
+
+
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            android:id="@+id/install_container"
+            android:background="#00AB41"
+            android:visibility="gone"
+            >
+
+
+            <TextView
+                android:id="@+id/install_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Update downloaded and install it now."
+                android:textColor="@color/white"
+                android:layout_toStartOf="@id/install_btn"
+                android:layout_centerVertical="true"
+                android:layout_alignParentStart="true"
+                />
+
+            <Button
+                android:id="@+id/install_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="#008631"
+                android:text="Install"
+                android:layout_alignParentEnd="true"
+                android:layout_margin="4dp"
+
+                />
+
+
+        </RelativeLayout>
+
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            android:background="@android:color/holo_red_light"
+            android:visibility="gone"
+            android:id="@+id/update_container"
+            >
+
+            <TextView
+                android:id="@+id/update_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Update is Available and click the update button."
+                android:textColor="@color/white"
+                android:layout_toStartOf="@id/update_btn"
+                android:layout_centerVertical="true"
+                android:layout_alignParentStart="true"
+                />
+
+            <Button
+                android:id="@+id/update_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@android:color/holo_red_dark"
+                android:text="Update"
+                android:layout_alignParentEnd="true"
+                android:layout_margin="4dp"
+
+
+                />
+
+
+        </RelativeLayout>
+
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/update_download_progress_container"
+            android:visibility="gone"
+
+            >
+
+            <ProgressBar
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:id="@+id/update_download_progress_bar"
+                style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+                android:max="100"
+                android:background="@drawable/custom_horizontal_progress_bar_bg"
+                android:progressDrawable="@drawable/custom_horizontal_progress_bar"
+                />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/update_download_progress_text"
+                android:text="0%"
+                android:textSize="24sp"
+                android:layout_gravity="center"
+                android:textColor="@color/white"
+                />
+        </FrameLayout>
+
+    </FrameLayout>
+
+</LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/nav_host"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/nav_view"
+        android:layout_below="@id/top_bar"
+        />
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/nav_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="@color/white"
+        app:menu="@menu/bottom_nav_menu"
+        style="@style/CustomBottomNavigationView"
+
+        />
+
+
+</RelativeLayout>
