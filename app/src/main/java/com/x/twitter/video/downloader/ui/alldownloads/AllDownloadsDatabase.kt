@@ -1,8 +1,8 @@
-package com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.alldownloads
+package com.x.twitter.video.downloader.ui.alldownloads
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.alldownloads.models.DownloadedFileItem
+import com.x.twitter.video.downloader.ui.alldownloads.models.DownloadedFileItem
 
 
 @Database(entities = [DownloadedFileItem::class], version = 1)

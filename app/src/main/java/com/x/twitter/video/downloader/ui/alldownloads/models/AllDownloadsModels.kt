@@ -1,4 +1,4 @@
-package com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.alldownloads.models
+package com.x.twitter.video.downloader.ui.alldownloads.models
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

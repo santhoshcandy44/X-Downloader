@@ -1,7 +1,7 @@
-package com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.home
+package com.x.twitter.video.downloader.ui.home
 
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.home.models.DownloadFileItem
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.home.models.Variant
+import com.x.twitter.video.downloader.ui.home.models.DownloadFileItem
+import com.x.twitter.video.downloader.ui.home.models.Variant
 
 
 interface DownloadItemClickListener{

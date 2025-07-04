@@ -1,6 +1,6 @@
-package com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.alldownloads
+package com.x.twitter.video.downloader.ui.alldownloads
 
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.BaseApplication
+import com.x.twitter.video.downloader.BaseApplication
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -27,15 +27,15 @@ import com.google.android.gms.ads.admanager.AdManagerInterstitialAd
 import com.google.android.gms.ads.admanager.AdManagerInterstitialAdLoadCallback
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.*
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.R
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.databinding.FragmentAllDownloadsBinding
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.alldownloads.adapters.DownloadedRecyclerViewAdapter
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.alldownloads.models.DownloadedFileItem
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.utils.toast
+import com.x.twitter.video.downloader.*
+import com.x.twitter.video.downloader.R
+import com.x.twitter.video.downloader.databinding.FragmentAllDownloadsBinding
+import com.x.twitter.video.downloader.ui.alldownloads.adapters.DownloadedRecyclerViewAdapter
+import com.x.twitter.video.downloader.ui.alldownloads.models.DownloadedFileItem
+import com.x.twitter.video.downloader.utils.toast
 import java.io.*
 import java.util.*
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.home.PermissionGrantedListener
+import com.x.twitter.video.downloader.ui.home.PermissionGrantedListener
 
 class AllDownloadsFragment : Fragment() {
 

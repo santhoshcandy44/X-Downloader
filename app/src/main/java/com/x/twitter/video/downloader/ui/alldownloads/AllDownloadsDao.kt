@@ -1,10 +1,10 @@
-package com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.alldownloads
+package com.x.twitter.video.downloader.ui.alldownloads
 
 import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.alldownloads.models.DownloadedFileItem
+import com.x.twitter.video.downloader.ui.alldownloads.models.DownloadedFileItem
 
 
 @Dao

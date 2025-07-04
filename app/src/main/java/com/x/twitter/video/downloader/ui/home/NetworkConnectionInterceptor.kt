@@ -1,4 +1,4 @@
-package com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.home
+package com.x.twitter.video.downloader.ui.home
 
 import android.content.Context
 import android.net.ConnectivityManager

@@ -1,6 +1,6 @@
-package com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.home
+package com.x.twitter.video.downloader.ui.home
 
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.BaseApplication
+import com.x.twitter.video.downloader.BaseApplication
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -32,7 +32,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.android.volley.*
-import com.android.volley.Response.*
 import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.Volley
 import com.bumptech.glide.Glide
@@ -44,17 +43,17 @@ import com.google.android.gms.ads.nativead.MediaView
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.*
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.BuildConfig
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.R
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.databinding.FragmentHomeBinding
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.alldownloads.AllDownloadsDatabaseBuilder
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.alldownloads.models.DownloadedFileItem
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.home.adapters.DownloadMediaRecyclerAdapter
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.home.models.DownloadFileItem
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.home.models.ErrorData
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.home.models.Variant
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.utils.*
+import com.x.twitter.video.downloader.*
+import com.x.twitter.video.downloader.BuildConfig
+import com.x.twitter.video.downloader.R
+import com.x.twitter.video.downloader.databinding.FragmentHomeBinding
+import com.x.twitter.video.downloader.ui.alldownloads.AllDownloadsDatabaseBuilder
+import com.x.twitter.video.downloader.ui.alldownloads.models.DownloadedFileItem
+import com.x.twitter.video.downloader.ui.home.adapters.DownloadMediaRecyclerAdapter
+import com.x.twitter.video.downloader.ui.home.models.DownloadFileItem
+import com.x.twitter.video.downloader.ui.home.models.ErrorData
+import com.x.twitter.video.downloader.ui.home.models.Variant
+import com.x.twitter.video.downloader.utils.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
@@ -72,6 +71,10 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.collections.HashMap
+import androidx.core.view.isGone
+import androidx.core.view.isVisible
+import androidx.core.graphics.drawable.toDrawable
+import androidx.core.net.toUri
 
 interface PermissionGrantedListener {
     fun onPermissionGranted()
@@ -119,11 +122,11 @@ class HomeFragment : Fragment(),
             if (!downloadBtn.isEnabled) {
                 downloadBtn.isEnabled = true
             }
-            if (indicator.visibility == View.VISIBLE) {
+            if (indicator.isVisible) {
                 indicator.visibility = View.GONE
             }
 
-            if (dlBtnText.visibility == View.GONE) {
+            if (dlBtnText.isGone) {
                 dlBtnText.visibility = View.VISIBLE
             }
 
@@ -196,11 +199,11 @@ class HomeFragment : Fragment(),
            if (!downloadBtn.isEnabled) {
                downloadBtn.isEnabled = true
            }
-           if (indicator.visibility == View.VISIBLE) {
+           if (indicator.isVisible) {
                indicator.visibility = View.GONE
 
            }
-           if (dlBtnText.visibility == View.GONE) {
+           if (dlBtnText.isGone) {
                dlBtnText.visibility = View.VISIBLE
            }
        }
@@ -238,11 +241,11 @@ class HomeFragment : Fragment(),
                         if (!downloadBtn.isEnabled) {
                             downloadBtn.isEnabled = true
                         }
-                        if (indicator.visibility == View.VISIBLE) {
+                        if (indicator.isVisible) {
                             indicator.visibility = View.GONE
                         }
 
-                        if (dlBtnText.visibility == View.GONE) {
+                        if (dlBtnText.isGone) {
                             dlBtnText.visibility = View.VISIBLE
                         }
                     } else {
@@ -250,7 +253,7 @@ class HomeFragment : Fragment(),
                         errorCon.findViewById<TextView>(
                             R.id.error_message
                         ).text = "Something went wrong try again..."
-                        if (errorCon.visibility == View.VISIBLE) {
+                        if (errorCon.isVisible) {
                             collapse(errorCon)
                         }
                         expand(errorCon)
@@ -270,12 +273,12 @@ class HomeFragment : Fragment(),
                     if (!downloadBtn.isEnabled) {
                         downloadBtn.isEnabled = true
                     }
-                    if (indicator.visibility == View.VISIBLE) {
+                    if (indicator.isVisible) {
                         indicator.visibility = View.GONE
 
                     }
 
-                    if (dlBtnText.visibility == View.GONE) {
+                    if (dlBtnText.isGone) {
                         dlBtnText.visibility = View.VISIBLE
                     }
 
@@ -301,7 +304,7 @@ class HomeFragment : Fragment(),
                     errorCon.findViewById<TextView>(
                         R.id.error_message
                     ).text = errorMessage
-                    if (errorCon.visibility == View.VISIBLE) {
+                    if (errorCon.isVisible) {
                         collapse(errorCon)
                     }
                     expand(errorCon)
@@ -334,11 +337,11 @@ class HomeFragment : Fragment(),
             if (!downloadBtn.isEnabled) {
                 downloadBtn.isEnabled = true
             }
-            if (indicator.visibility == View.VISIBLE) {
+            if (indicator.isVisible) {
                 indicator.visibility = View.GONE
 
             }
-            if (dlBtnText.visibility == View.GONE) {
+            if (dlBtnText.isGone) {
                 dlBtnText.visibility = View.VISIBLE
             }
         }
@@ -436,7 +439,7 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
                                         playerActivityFinishedInterstitialAd = null
                                     }
 
-                                    override fun onAdFailedToShowFullScreenContent(p0: com.google.android.gms.ads.AdError) {
+                                    override fun onAdFailedToShowFullScreenContent(p0: AdError) {
                                         Log.e(TAG, "Ad failed to show fullscreen content.")
                                         playerActivityFinishedInterstitialAd = null
                                     }
@@ -504,7 +507,7 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
 
     private fun createFolder(): Boolean {
         //folder name
-        val folderName = "TwitterMonkey"
+        val folderName = "X Monkey"
 
         //create folder using name we just input
         val file = File("${Environment.getExternalStorageDirectory()}/$folderName")
@@ -536,18 +539,18 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
             loadingDialog.show()
         }
 
-        if (errorCon.visibility == View.VISIBLE) {
+        if (errorCon.isVisible) {
             collapse(errorCon)
         }
 
         if (downloadBtn.isEnabled) {
             downloadBtn.isEnabled = false
         }
-        if (indicator.visibility == View.GONE) {
+        if (indicator.isGone) {
             indicator.visibility = View.VISIBLE
         }
 
-        if (dlBtnText.visibility == View.VISIBLE) {
+        if (dlBtnText.isVisible) {
             dlBtnText.visibility = View.GONE
         }
 
@@ -657,9 +660,7 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
 
     override fun onDestroy() {
         super.onDestroy()
-        mediaRequest?.let {
-            it.cancel()
-        }
+        mediaRequest?.cancel()
     }
 
     private lateinit var downloadBtn: FrameLayout
@@ -734,7 +735,7 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
                 val frame =
                     root.findViewById<CardView>(R.id.fragment_home_admob_native_ad_native_ad_frame)
 
-                if (frame.visibility == View.VISIBLE) {
+                if (frame.isVisible) {
                     frame.visibility = View.GONE
                 }
             }
@@ -766,7 +767,7 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
                                         downloadCompletedInterstitialAd = null
                                     }
 
-                                    override fun onAdFailedToShowFullScreenContent(p0: com.google.android.gms.ads.AdError) {
+                                    override fun onAdFailedToShowFullScreenContent(p0: AdError) {
                                         Log.e(TAG, "Ad failed to show fullscreen content.")
                                         downloadCompletedInterstitialAd = null
                                     }
@@ -812,7 +813,7 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
                                         downloadCompletedInterstitialAd = null
                                     }
 
-                                    override fun onAdFailedToShowFullScreenContent(p0: com.google.android.gms.ads.AdError) {
+                                    override fun onAdFailedToShowFullScreenContent(p0: AdError) {
                                         Log.e(TAG, "Ad failed to show fullscreen content.")
                                         downloadCompletedInterstitialAd = null
                                     }
@@ -835,7 +836,7 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
 
         val data = requireActivity().intent.getStringExtra(Intent.EXTRA_TEXT)
         data?.let {
-            val dataUri = Uri.parse(data)
+            val dataUri = data.toUri()
             if (dataUri.host.equals("twitter.com") || dataUri.host.equals("x.com")) {
                 linkInput.setText(dataUri.toString())
             }
@@ -917,9 +918,7 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
                 context, downloadFileItems)
 
         downloadDialog.window?.setBackgroundDrawable(
-            ColorDrawable(
-                android.graphics.Color.TRANSPARENT
-            )
+            android.graphics.Color.TRANSPARENT.toDrawable()
         )
 
         downloadDialogClose.setOnClickListener {
@@ -1030,13 +1029,13 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
         try {
 
             requireActivity().runOnUiThread {
-                if (downloadingProgressBarContainer.visibility == View.GONE) {
+                if (downloadingProgressBarContainer.isGone) {
                     downloadingProgressBarContainer.visibility = View.VISIBLE
                 }
                 progressBar.progress = 0
                 progress_text.text = "0%"
 
-                if (alpha_container.visibility == View.GONE) {
+                if (alpha_container.isGone) {
                     alpha_container.visibility = View.VISIBLE
                 }
                 alpha_container.alpha = 1.0f
@@ -1048,7 +1047,7 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
 
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
 
-                val folderName = "TwitterMonkey"
+                val folderName = "X Monkey"
 
                 val file = File("${Environment.getExternalStorageDirectory()}/$folderName")
 
@@ -1107,7 +1106,7 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
                     Log.d("TAG_123", fileFormatList.toString())
 
                 }
-                val folderName = "TwitterMonkey"
+                val folderName = "X Monkey"
                 Log.d("TAG_123", ext)
 
                 var uniqueFileName = generateUniqueFileName(ext)
@@ -1253,13 +1252,13 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
 
             requireActivity().runOnUiThread {
 
-                if (downloadingProgressBarContainer.visibility == View.VISIBLE) {
+                if (downloadingProgressBarContainer.isVisible) {
                     downloadingProgressBarContainer.visibility = View.GONE
                 }
                 progressBar.progress = 0
                 progress_text.text = "0%"
 
-                if (alpha_container.visibility == View.VISIBLE) {
+                if (alpha_container.isVisible) {
                     alpha_container.visibility = View.GONE
                 }
                 alpha_container.alpha = 1.0f
@@ -1271,12 +1270,12 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
 
                         toast(context, "File might be deleted, re-download it")
 
-                        if (alpha_container.visibility == View.GONE) {
+                        if (alpha_container.isGone) {
                             alpha_container.visibility = View.VISIBLE
                         }
                         val reDownload =
                             li.findViewById<ImageView>(R.id.downloading_refresh_download)
-                        if (reDownload.visibility == View.GONE) {
+                        if (reDownload.isGone) {
                             reDownload.visibility = View.VISIBLE
                         }
                         reDownload.setOnClickListener {
@@ -1322,7 +1321,7 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
 
                     } else {
                         val intent = Intent(context, PlayerActivity::class.java)
-                        intent.data = Uri.parse(outputFileUri)
+                        intent.data = outputFileUri.toUri()
                         playerActivityLauncher.launch(intent)
                         playerActivityLauncherLoadInterstitialAd()
                     }
@@ -1536,7 +1535,7 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
                     if (!isRefreshed) {
                         downloadingContainerWrapper.addView(downloadingItemView, 1)
                     }
-                    if (downloadingContainerWrapper.visibility == View.GONE) {
+                    if (downloadingContainerWrapper.isGone) {
                         downloadingContainerWrapper.visibility = View.VISIBLE
                     }
                 }
@@ -1567,17 +1566,17 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
 
                     launch(Dispatchers.Main) {
 
-                        if (alphaContainer.visibility == View.GONE) {
+                        if (alphaContainer.isGone) {
                             alphaContainer.visibility = View.VISIBLE
                         }
                         alphaContainer.alpha = 1.0f
 
-                        if (downloadingProgressBarContainer.visibility == View.VISIBLE) {
+                        if (downloadingProgressBarContainer.isVisible) {
                             downloadingProgressBarContainer.visibility = View.GONE
 
                         }
 
-                        if (downloadingRefresh.visibility == View.GONE) {
+                        if (downloadingRefresh.isGone) {
                             downloadingRefresh.visibility = View.VISIBLE
                         }
 
@@ -1615,7 +1614,7 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
                         loadingDialog.dismiss()
                     }
                     if (isRefreshed) {
-                        if (downloadingRefresh.visibility == View.GONE) {
+                        if (downloadingRefresh.isGone) {
                             downloadingRefresh.visibility = View.VISIBLE
                         }
 
@@ -1713,15 +1712,15 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
             if (!downloadBtn.isEnabled) {
                 downloadBtn.isEnabled = true
             }
-            if (indicator.visibility == View.VISIBLE) {
+            if (indicator.isVisible) {
                 indicator.visibility = View.GONE
             }
 
-            if (dlBtnText.visibility == View.GONE) {
+            if (dlBtnText.isGone) {
                 dlBtnText.visibility = View.VISIBLE
             }
 
-            if (errorCon.visibility == View.VISIBLE) {
+            if (errorCon.isVisible) {
                 collapse(errorCon)
             }
         }

@@ -1,4 +1,4 @@
-package com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.alldownloads.adapters
+package com.x.twitter.video.downloader.ui.alldownloads.adapters
 
 import android.app.Activity
 import android.app.AlertDialog
@@ -25,16 +25,16 @@ import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.*
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.alldownloads.AllDownloadsDatabaseBuilder
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.alldownloads.AllDownloadsFragment
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.alldownloads.models.DownloadedFileItem
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.home.NetworkConnectionInterceptor
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.home.NoConnectivityException
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.home.PermissionGrantedListener
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.utils.generateUniqueFileName
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.utils.humanReadableByteCountBin
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.utils.toast
+import com.x.twitter.video.downloader.*
+import com.x.twitter.video.downloader.ui.alldownloads.AllDownloadsDatabaseBuilder
+import com.x.twitter.video.downloader.ui.alldownloads.AllDownloadsFragment
+import com.x.twitter.video.downloader.ui.alldownloads.models.DownloadedFileItem
+import com.x.twitter.video.downloader.ui.home.NetworkConnectionInterceptor
+import com.x.twitter.video.downloader.ui.home.NoConnectivityException
+import com.x.twitter.video.downloader.ui.home.PermissionGrantedListener
+import com.x.twitter.video.downloader.utils.generateUniqueFileName
+import com.x.twitter.video.downloader.utils.humanReadableByteCountBin
+import com.x.twitter.video.downloader.utils.toast
 import kotlinx.coroutines.*
 import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
@@ -65,10 +65,13 @@ class DownloadedRecyclerViewAdapter(
         )
     }
 
-    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-
+    override fun onBindViewHolder(
+        holder: RecyclerView.ViewHolder,
+        po: Int
+    ) {
 
         val vh = holder as VH
+        val position = vh.bindingAdapterPosition
         val item = items[position]
         val downloadedThumbnail = vh.itemView.findViewById<ImageView>(R.id.downloaded_thumbnail)
         val downloadedProfile = vh.itemView.findViewById<ImageView>(R.id.downloaded_profile)
@@ -647,7 +650,7 @@ class DownloadedRecyclerViewAdapter(
 
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
 
-                val folderName = "TwitterMonkey"
+                val folderName = "X Monkey"
                 val file = File("${Environment.getExternalStorageDirectory()}/$folderName")
 
                 if (!file.exists()) {
@@ -685,7 +688,7 @@ class DownloadedRecyclerViewAdapter(
                     val fileFormatList = item.contentType.split("/")
                     fileFormatList[fileFormatList.size - 1]
                 }
-                val folderName = "TwitterMonkey"
+                val folderName = "X Monkey"
                 var uniqueFileName = generateUniqueFileName(ext)
 
 
@@ -910,7 +913,7 @@ class DownloadedRecyclerViewAdapter(
 
     private fun createFolder(): Boolean {
         //folder name
-        val folderName = "TwitterMonkey"
+        val folderName = "X Monkey"
 
         //create folder using name we just input
         val file = File("${Environment.getExternalStorageDirectory()}/$folderName")

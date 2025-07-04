@@ -1,4 +1,4 @@
-package com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.alldownloads
+package com.x.twitter.video.downloader.ui.alldownloads
 
 import android.content.Context
 import androidx.room.Room

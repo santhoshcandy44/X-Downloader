@@ -1,4 +1,4 @@
-package com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.home.adapters
+package com.x.twitter.video.downloader.ui.home.adapters
 
 import android.app.AlertDialog
 import android.content.Context
@@ -11,13 +11,13 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.android.flexbox.FlexboxLayout
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.R
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.TwitterMonkeyAPI
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.home.DownloadItemClickListener
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.home.NetworkConnectionInterceptor
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.home.NoConnectivityException
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.home.models.DownloadFileItem
-import com.twittervideodownloader.video.gif.twitter.save.twittermonkey.utils.humanReadableByteCountBin
+import com.x.twitter.video.downloader.R
+import com.x.twitter.video.downloader.TwitterMonkeyAPI
+import com.x.twitter.video.downloader.ui.home.DownloadItemClickListener
+import com.x.twitter.video.downloader.ui.home.NetworkConnectionInterceptor
+import com.x.twitter.video.downloader.ui.home.NoConnectivityException
+import com.x.twitter.video.downloader.ui.home.models.DownloadFileItem
+import com.x.twitter.video.downloader.utils.humanReadableByteCountBin
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch

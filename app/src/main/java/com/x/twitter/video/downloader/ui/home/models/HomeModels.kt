@@ -1,4 +1,4 @@
-package com.twittervideodownloader.video.gif.twitter.save.twittermonkey.ui.home.models
+package com.x.twitter.video.downloader.ui.home.models
 
 import com.google.gson.annotations.SerializedName
 import java.util.ArrayList
