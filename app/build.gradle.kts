@@ -14,7 +14,7 @@ android {
         applicationId = "com.x.twitter.video.downloader"
         minSdk = 23
         targetSdk = 36
-        versionCode = 8
+        versionCode = 9
         versionName = "1.2.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
