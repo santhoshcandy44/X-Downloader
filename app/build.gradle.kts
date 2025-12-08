@@ -14,8 +14,8 @@ android {
         applicationId = "com.x.twitter.video.downloader"
         minSdk = 23
         targetSdk = 36
-        versionCode = 10
-        versionName = "1.2.7"
+        versionCode = 11
+        versionName = "1.2.8"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String" ,"BASE_URL","\"https://v2-x-api.25122022.xyz\"")

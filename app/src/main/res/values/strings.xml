@@ -9,12 +9,12 @@
     <string name="download_text">Download</string>
 
   
-    <string name="ADMOB_HOME_NATIVE">ca-app-pub-6109295931879626/9892865562</string>
-    <string name="ADMOB_HOME_INTERSTITIAL">ca-app-pub-6109295931879626/1363924265</string>
-    <string name="ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER">ca-app-pub-6109295931879626/9525485318</string>
-    <string name="ADMOB_TOP_MEDIUM_NATIVE">ca-app-pub-6109295931879626/6209056837</string>
-    <string name="ADMOB_ALL_DOWNLOADS_INTERSTITIAL_VIDEO_PLAYER">ca-app-pub-6109295931879626/4812214684</string>
-    <string name="ADMOB_APP_OPEN">ca-app-pub-6109295931879626/3499133019</string>
+    <string name="ADMOB_HOME_NATIVE">ca-app-pub-6109295931879626/1725476750</string>
+    <string name="ADMOB_HOME_INTERSTITIAL">ca-app-pub-6109295931879626/8705818078</string>
+    <string name="ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER">ca-app-pub-6109295931879626/5692819533</string>
+    <string name="ADMOB_TOP_MEDIUM_NATIVE">ca-app-pub-6109295931879626/3366039098</string>
+    <string name="ADMOB_ALL_DOWNLOADS_INTERSTITIAL_VIDEO_PLAYER">ca-app-pub-6109295931879626/9739875750</string>
+    <string name="ADMOB_APP_OPEN">ca-app-pub-6109295931879626/6602398916</string>
 
     <string name="facebook_app_id">407218865408285</string>
 
