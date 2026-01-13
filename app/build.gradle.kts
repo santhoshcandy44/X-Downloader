@@ -14,8 +14,8 @@ android {
         applicationId = "com.x.twitter.video.downloader"
         minSdk = 23
         targetSdk = 36
-        versionCode = 11
-        versionName = "1.2.8"
+        versionCode = 12
+        versionName = "1.2.9"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String" ,"BASE_URL","\"https://v2-x-api.25122022.xyz\"")
@@ -89,24 +89,10 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer-dash:1.8.0")
     implementation("androidx.media3:media3-ui:1.8.0")
 
-    // def media2_version = "1.2.1"
-
-    // Interacting with MediaSessions
-    //   implementation "androidx.media2:media2-session:$media2_version"
-    // optional - UI widgets for VideoView and MediaControlView
-    //implementation "androidx.media2:media2-widget:$media2_version"
-    // optional - Implementation of a SessionPlayer
-    //implementation "androidx.media2:media2-player:$media2_version"
-
     implementation("androidx.annotation:annotation:1.9.1")
-    //implementation 'com.facebook.android:audience-network-sdk:6.13.7'
-    implementation("com.google.android.gms:play-services-ads:24.8.0")
-    implementation("com.google.ads.mediation:facebook:6.21.0.0")
 
     //facebook ads
-    implementation("com.facebook.android:facebook-android-sdk:18.1.3")
-
-    implementation("com.google.android.ump:user-messaging-platform:4.0.0")
+    implementation("com.facebook.android:audience-network-sdk:6.+")
 
     // Import the BoM for the Firebase platform
     implementation(platform("com.google.firebase:firebase-bom:34.6.0"))
@@ -135,6 +121,4 @@ dependencies {
     ksp("androidx.room:room-compiler:$room_version")
     // optional - Kotlin extensions and Coroutines support for Room
     implementation ("androidx.room:room-ktx:$room_version")
-
-
 }

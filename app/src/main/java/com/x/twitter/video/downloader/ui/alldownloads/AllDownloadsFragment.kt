@@ -1,6 +1,5 @@
 package com.x.twitter.video.downloader.ui.alldownloads
 
-import com.x.twitter.video.downloader.BaseApplication
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -15,18 +14,18 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LiveData
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.gms.ads.*
-import com.google.android.gms.ads.admanager.AdManagerAdRequest
-import com.google.android.gms.ads.admanager.AdManagerInterstitialAd
-import com.google.android.gms.ads.admanager.AdManagerInterstitialAdLoadCallback
-import com.google.android.gms.ads.interstitial.InterstitialAd
-import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.facebook.ads.Ad
+import com.facebook.ads.AdError
+import com.facebook.ads.AdListener
+import com.facebook.ads.AdSize
+import com.facebook.ads.AdView
+import com.facebook.ads.InterstitialAd
+import com.facebook.ads.InterstitialAdListener
 import com.x.twitter.video.downloader.*
 import com.x.twitter.video.downloader.R
 import com.x.twitter.video.downloader.databinding.FragmentAllDownloadsBinding
@@ -45,79 +44,61 @@ class AllDownloadsFragment : Fragment() {
         this.pgl = pgl
     }
 
-    var mInterstitialAd: InterstitialAd? = null
+    private var mInterstitialAd: InterstitialAd? = null
     val TAG = "TAG_123"
 
 
     fun allDownloadsPlayerActivityFinishedLoadInterstitialAd() {
-        MobileAds.initialize(
-            requireContext()
-        ) { }
-        val adRequest: AdRequest = AdRequest.Builder().build()
-
-        AdManagerInterstitialAd.load(
+        val ad1 = InterstitialAd(
             requireContext(),
-            resources.getString(R.string.ADMOB_ALL_DOWNLOADS_INTERSTITIAL_VIDEO_PLAYER),
+            "245848558610696_245851035277115"
+        )
 
-            adRequest,
-            object : InterstitialAdLoadCallback() {
-                override fun onAdLoaded(interstitialAd: InterstitialAd) {
+        // Load the ad
+        ad1.loadAd(
+            ad1.buildLoadAdConfig().withAdListener(object : InterstitialAdListener {
 
-                    mInterstitialAd = interstitialAd
-                    Log.i(TAG, "onAdLoaded")
-                }
+                    override fun onAdLoaded(ad: Ad) {
+                        mInterstitialAd = ad1
+                        Log.i(TAG, "Facebook Interstitial onAdLoaded")
+                    }
 
-                override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-                    Log.d(TAG, loadAdError.toString())
-                    mInterstitialAd = null
-                }
-            })
+                    override fun onError(ad: Ad, adError: AdError) {
+                        Log.e(
+                            TAG,
+                            "Facebook Interstitial failed: ${adError.errorMessage}"
+                        )
+                        mInterstitialAd = null
+                    }
+
+                    override fun onInterstitialDisplayed(ad: Ad) {
+                        Log.d(TAG, "Facebook Interstitial displayed")
+                    }
+
+                    override fun onInterstitialDismissed(ad: Ad) {
+                        mInterstitialAd = null
+                        Log.d(TAG, "Facebook Interstitial dismissed")
+                    }
+
+                    override fun onAdClicked(ad: Ad) {
+                        app.increaseAdClickCount()
+                        Log.d(TAG, "Facebook Interstitial clicked")
+                    }
+
+                    override fun onLoggingImpression(ad: Ad) {
+                        Log.d(TAG, "Facebook Interstitial impression logged")
+                    }
+                }).build()
+        )
     }
-
 
     val playerActivityLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            val app = requireActivity().application as Application
             if (it.resultCode == Activity.RESULT_OK) {
-                if (app.AD_TYPE == BaseApplication.AdType.ADMOB) {
-                    Handler(Looper.getMainLooper()).postDelayed({
-                        mInterstitialAd?.let {
-                            mInterstitialAd!!.fullScreenContentCallback =
-                                object : FullScreenContentCallback() {
-                                    override fun onAdClicked() {
-                                        app.increaseAdClickCount()
-
-                                        Log.d(TAG, "Ad was clicked.")
-                                    }
-
-                                    override fun onAdDismissedFullScreenContent() {
-                                        Log.d(TAG, "Ad dismissed fullscreen content.")
-                                        mInterstitialAd = null
-                                    }
-
-                                    override fun onAdFailedToShowFullScreenContent(p0: AdError) {
-                                        Log.e(TAG, "Ad failed to show fullscreen content.")
-                                        mInterstitialAd = null
-                                    }
-
-                                    override fun onAdImpression() {
-                                        Log.d(TAG, "Ad recorded an impression.")
-                                    }
-
-                                    override fun onAdShowedFullScreenContent() {
-                                        Log.d(TAG, "Ad showed fullscreen content.")
-                                    }
-                                }
-                            mInterstitialAd!!.show(requireActivity())
-
-
-                        }
-                    }, 100)
-
-                }
-
+                Handler(Looper.getMainLooper()).postDelayed({
+                    mInterstitialAd?.show()
+                }, 100)
             }
-
         }
 
     private var _binding: FragmentAllDownloadsBinding? = null
@@ -134,7 +115,7 @@ class AllDownloadsFragment : Fragment() {
     override fun onStart() {
         super.onStart()
         if (adTypeChanged) {
-            if (downloadedFileItems.size > 0) {
+            if (downloadedFileItems.isNotEmpty()) {
 
                 if (noMediaLayout.visibility == View.VISIBLE) {
                     noMediaLayout.visibility = View.GONE
@@ -143,17 +124,13 @@ class AllDownloadsFragment : Fragment() {
                     downloadedRecyclerViewWrapper.visibility = View.VISIBLE
                 }
 
-                if (app.AD_TYPE == BaseApplication.AdType.ADMOB) {
-
-                    if (app.aicpProtector()) {
-                        if (frame.visibility == View.GONE) {
-                            frame.visibility = View.VISIBLE
-                        }
-                        loadNativeAdAdmob(requireContext(),root)
+                if (app.aicpProtector()) {
+                    if (frame.visibility == View.GONE) {
+                        frame.visibility = View.VISIBLE
                     }
-
-
+                    loadBanner(requireContext(), root)
                 }
+
                 adapter.notifyDataSetChanged()
             }
 
@@ -189,7 +166,7 @@ class AllDownloadsFragment : Fragment() {
                 val uri = Uri.fromParts("package", requireActivity().packageName, null)
                 intent.data = uri
                 storageActivityResultLauncher.launch(intent)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 val intent = Intent()
                 intent.action = Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION
                 storageActivityResultLauncher.launch(intent)
@@ -245,129 +222,42 @@ class AllDownloadsFragment : Fragment() {
 
 
     @SuppressLint("InflateParams")
-    private fun loadNativeAdAdmob(context:Context, root: View) {
+    private fun loadBanner(context: Context, root: View) {
 
-        MobileAds.initialize(context)
-
-        val adLoader = AdLoader.Builder(
+        val adView = AdView(
             context,
-           resources.getString(R.string.ADMOB_TOP_MEDIUM_NATIVE)
-        ).forNativeAd { nativeAd ->
+            "245848558610696_680906295104918",
+            AdSize.RECTANGLE_HEIGHT_250
+        )
 
-                val frame = root.findViewById<CardView>(R.id.all_downloads_admob_native_ad)
+        // Find the Ad Container (from root view)
+        val adContainer = root.findViewById<LinearLayout>(R.id.banner_container)
+        adView.buildLoadAdConfig()
+            .withAdListener(object : AdListener {
 
-                val nativeAdView = (LayoutInflater.from(
-                   context
-                ).inflate(
-                    R.layout.admob_native_ad_layout,
-                    null
-                )) as com.google.android.gms.ads.nativead.NativeAdView
-
-
-                nativeAdView.headlineView =
-                    nativeAdView.findViewById<TextView>(R.id.admob_native_ad_headline)
-                nativeAdView.advertiserView =
-                    nativeAdView.findViewById<TextView>(R.id.admob_native_ad_advertiser)
-                nativeAdView.bodyView =
-                    nativeAdView.findViewById<TextView>(R.id.admob_native_ad_body_text)
-                nativeAdView.starRatingView =
-                    nativeAdView.findViewById<RatingBar>(R.id.admob_native_ad_star_rating)
-                nativeAdView.mediaView = nativeAdView.findViewById(R.id.admob_native_ad_media_view)
-                nativeAdView.callToActionView =
-                    nativeAdView.findViewById<RelativeLayout>(R.id.ad_add_call_to_action)
-                nativeAdView.iconView =
-                    nativeAdView.findViewById<ImageView>(R.id.admob_native_ad_icon)
-
-                if ((nativeAdView.mediaView as com.google.android.gms.ads.nativead.MediaView).visibility
-                    == View.VISIBLE
-                ) {
-                    (nativeAdView.mediaView
-                            as com.google.android.gms.ads.nativead.MediaView)
-                        .visibility = View.GONE
-                }
-
-                /*
-                 (nativeAdView.mediaView as com.google.android.gms.ads.nativead.MediaView)
-                     .mediaContent=nativeAd.mediaContent
-                 */
-
-                (nativeAdView.headlineView as TextView).setText(nativeAd.headline)
-
-                if (nativeAd.headline == null) {
-                    (nativeAdView.headlineView as TextView).visibility = View.GONE
-                } else {
-                    (nativeAdView.headlineView as TextView).text = nativeAd.body
-                    (nativeAdView.headlineView as TextView).visibility = View.VISIBLE
-
-                }
-
-                if (nativeAd.body == null) {
-                    (nativeAdView.bodyView as TextView).visibility = View.GONE
-                } else {
-                    (nativeAdView.bodyView as TextView).text = nativeAd.body
-                    (nativeAdView.bodyView as TextView).visibility = View.VISIBLE
-                }
-
-                if (nativeAd.advertiser == null) {
-                    (nativeAdView.advertiserView as TextView).visibility = View.GONE
-                } else {
-                    (nativeAdView.advertiserView as TextView).text = nativeAd.advertiser
-                    (nativeAdView.advertiserView as TextView).visibility = View.VISIBLE
-
-                }
-
-                if (nativeAd.starRating == null) {
-                    (nativeAdView.starRatingView as RatingBar).visibility = View.GONE
-                } else {
-                    (nativeAdView.starRatingView as RatingBar).rating =
-                        nativeAd.starRating!!.toFloat()
-                    (nativeAdView.starRatingView as RatingBar).visibility = View.VISIBLE
-
-                }
-
-                if (nativeAd.icon == null) {
-                    (nativeAdView.iconView as ImageView).visibility = View.GONE
-                } else {
-                    (nativeAdView.iconView as ImageView).setImageDrawable(nativeAd.icon!!.drawable)
-                    (nativeAdView.iconView as ImageView).visibility = View.VISIBLE
-
-                }
-
-                if (nativeAd.callToAction == null) {
-                    (nativeAdView.callToActionView as RelativeLayout).visibility = View.GONE
-
-                } else {
-                    nativeAdView.findViewById<TextView>(R.id.admob_call_to_action_text).text =
-                        nativeAd.callToAction
-                    (nativeAdView.callToActionView as RelativeLayout).visibility = View.VISIBLE
-                }
-                nativeAdView.setNativeAd(nativeAd)
-                frame.removeAllViews()
-                frame.addView(nativeAdView)
-            }
-            .withAdListener(object : AdListener() {
-                override fun onAdClicked() {
-                    super.onAdClicked()
+                override fun onAdLoaded(ad: Ad) {
                     app.increaseAdClickCount()
+                    Log.d("FB_AD", "RECTANGLE loaded")
                 }
 
-                override fun onAdLoaded() {
-                    super.onAdLoaded()
-                    Log.i(TAG, "All Downloads Native ad loaded")
-                }
-
-                override fun onAdFailedToLoad(p0: LoadAdError) {
-                    super.onAdFailedToLoad(p0)
-                    Log.i(TAG, "All Downloads Native ad failed to load {${p0.message}}")
+                override fun onAdClicked(p0: Ad?) {
 
                 }
 
+                override fun onLoggingImpression(p0: Ad?) {
+
+                }
+
+                override fun onError(ad: Ad, adError: AdError) {
+                    Log.e("FB_AD", "ERROR: ${adError.errorMessage}")
+                }
             })
-            .build()
+        // Add the ad view to layout
+        adContainer.removeAllViews()
+        adContainer.addView(adView)
 
-
-        adLoader.loadAd(AdRequest.Builder().build())
-
+        // Load the ad
+        adView.loadAd()
     }
 
 
@@ -381,7 +271,7 @@ class AllDownloadsFragment : Fragment() {
 
     lateinit var app: Application
 
-    lateinit var frame: CardView
+    lateinit var frame: LinearLayout
 
     lateinit var allDownloadsProgressBar: ProgressBar
 
@@ -410,21 +300,14 @@ class AllDownloadsFragment : Fragment() {
                 }
 
                 override fun adDismiss() {
-
-                    if (app.AD_TYPE == BaseApplication.AdType.ADMOB) {
-
-
-                        if (frame.visibility == View.VISIBLE) {
-                            frame.visibility = View.GONE
-                        }
-
+                    if (frame.visibility == View.VISIBLE) {
+                        frame.visibility = View.GONE
                     }
-
                 }
             }
 
 
-        frame = root.findViewById(R.id.all_downloads_admob_native_ad)
+        frame = root.findViewById(R.id.banner_container)
         noMediaLayout = root.findViewById(R.id.no_media_layout)
         downloadedRecyclerView = root.findViewById(R.id.downloaded_recycler_view)
         downloadedRecyclerView.layoutManager = LinearLayoutManager(
@@ -443,10 +326,6 @@ class AllDownloadsFragment : Fragment() {
         ).allDownloadsDao()
 
         liveDataAllDownloadedFileItem = allDownloadsDao.getAll()
-
-
-
-
 
         return root
     }
@@ -493,15 +372,9 @@ class AllDownloadsFragment : Fragment() {
                         noMediaLayout.visibility = View.VISIBLE
                     }
 
-
-                    if (app.AD_TYPE == BaseApplication.AdType.ADMOB) {
-
-                        if (frame.visibility == View.VISIBLE) {
-                            frame.visibility = View.GONE
-                        }
+                    if (frame.visibility == View.VISIBLE) {
+                        frame.visibility = View.GONE
                     }
-
-
                 } else {
                     if (noMediaLayout.visibility == View.VISIBLE) {
                         noMediaLayout.visibility = View.GONE
@@ -510,16 +383,12 @@ class AllDownloadsFragment : Fragment() {
                         downloadedRecyclerView.visibility = View.VISIBLE
                     }
 
-
-                    if (app.AD_TYPE == BaseApplication.AdType.ADMOB) {
-                        if (app.aicpProtector()) {
-                            if (frame.visibility == View.GONE) {
-                                frame.visibility = View.VISIBLE
-                            }
-                            loadNativeAdAdmob(requireContext(),root)
+                    if (app.aicpProtector()) {
+                        if (frame.visibility == View.GONE) {
+                            frame.visibility = View.VISIBLE
                         }
+                        loadBanner(requireContext(), root)
                     }
-
                 }
 
 

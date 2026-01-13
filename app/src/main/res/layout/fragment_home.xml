@@ -118,14 +118,11 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             >
-            <androidx.cardview.widget.CardView
-                android:id="@+id/fragment_home_admob_native_ad_native_ad_frame"
+            <com.facebook.ads.NativeAdLayout
+                android:id="@+id/native_ad_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:focusable="true"
-                android:foreground="?android:attr/selectableItemBackground"
-                app:cardUseCompatPadding="true"
-                />
+                android:orientation="vertical" />
         </FrameLayout>
 
 

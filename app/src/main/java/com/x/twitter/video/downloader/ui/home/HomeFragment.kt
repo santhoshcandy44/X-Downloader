@@ -1,17 +1,22 @@
 package com.x.twitter.video.downloader.ui.home
 
-import com.x.twitter.video.downloader.BaseApplication
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
-import android.content.*
+import android.content.ClipboardManager
+import android.content.ContentValues
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.database.Cursor
-import android.graphics.drawable.ColorDrawable
 import android.media.MediaScannerConnection
 import android.net.Uri
-import android.os.*
+import android.os.Build
+import android.os.Bundle
+import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import android.text.Editable
 import android.text.TextWatcher
@@ -20,10 +25,22 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
-import android.widget.*
+import android.widget.Button
+import android.widget.EditText
+import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.ProgressBar
+import android.widget.RelativeLayout
+import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.toDrawable
+import androidx.core.net.toUri
+import androidx.core.view.isGone
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -31,21 +48,36 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.android.volley.*
+import com.android.volley.DefaultRetryPolicy
+import com.android.volley.NetworkError
+import com.android.volley.NoConnectionError
+import com.android.volley.Request
+import com.android.volley.RetryPolicy
+import com.android.volley.TimeoutError
+import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.Volley
 import com.bumptech.glide.Glide
+import com.facebook.ads.Ad
+import com.facebook.ads.AdError
+import com.facebook.ads.AdOptionsView
+import com.facebook.ads.InterstitialAd
+import com.facebook.ads.InterstitialAdListener
+import com.facebook.ads.MediaView
+import com.facebook.ads.NativeAd
+import com.facebook.ads.NativeAdLayout
+import com.facebook.ads.NativeAdListener
 import com.github.ybq.android.spinkit.SpinKitView
-import com.google.android.gms.ads.*
-import com.google.android.gms.ads.interstitial.InterstitialAd
-import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
-import com.google.android.gms.ads.nativead.MediaView
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
-import com.x.twitter.video.downloader.*
+import com.x.twitter.video.downloader.AdHideListener
+import com.x.twitter.video.downloader.Application
 import com.x.twitter.video.downloader.BuildConfig
+import com.x.twitter.video.downloader.MainActivity
+import com.x.twitter.video.downloader.PlayerActivity
 import com.x.twitter.video.downloader.R
+import com.x.twitter.video.downloader.TwitterMonkeyAPI
 import com.x.twitter.video.downloader.databinding.FragmentHomeBinding
 import com.x.twitter.video.downloader.ui.alldownloads.AllDownloadsDatabaseBuilder
 import com.x.twitter.video.downloader.ui.alldownloads.models.DownloadedFileItem
@@ -53,7 +85,11 @@ import com.x.twitter.video.downloader.ui.home.adapters.DownloadMediaRecyclerAdap
 import com.x.twitter.video.downloader.ui.home.models.DownloadFileItem
 import com.x.twitter.video.downloader.ui.home.models.ErrorData
 import com.x.twitter.video.downloader.ui.home.models.Variant
-import com.x.twitter.video.downloader.utils.*
+import com.x.twitter.video.downloader.utils.collapse
+import com.x.twitter.video.downloader.utils.expand
+import com.x.twitter.video.downloader.utils.generateUniqueFileName
+import com.x.twitter.video.downloader.utils.humanReadableByteCountBin
+import com.x.twitter.video.downloader.utils.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
@@ -63,18 +99,18 @@ import retrofit2.Call
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.io.*
+import java.io.BufferedInputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
 import java.net.ConnectException
 import java.net.URL
 import java.net.UnknownHostException
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
 import java.util.concurrent.TimeUnit
-import kotlin.collections.HashMap
-import androidx.core.view.isGone
-import androidx.core.view.isVisible
-import androidx.core.graphics.drawable.toDrawable
-import androidx.core.net.toUri
 
 interface PermissionGrantedListener {
     fun onPermissionGranted()
@@ -106,13 +142,13 @@ class HomeFragment : Fragment(),
             if (loadingDialog.isShowing) {
                 loadingDialog.dismiss()
             }
-            downloadFileItems=ArrayList()
+            downloadFileItems = ArrayList()
             downloadFileItems.clear()
             downloadFileItems.addAll(
                 mediaItems
             )
 
-            createDownloadDialog(downloadFileItems,context)
+            createDownloadDialog(downloadFileItems, context)
 
             adapter.notifyDataSetChanged()
 
@@ -138,77 +174,77 @@ class HomeFragment : Fragment(),
     }
 
 
+    fun showError(message: String) {
+        errorCon.findViewById<TextView>(
+            R.id.error_message
+        ).text = message
+        expand(errorCon)
+    }
 
-   fun showError(message:String){
-       errorCon.findViewById<TextView>(
-           R.id.error_message
-       ).text = message
-       expand(errorCon)
-   }
+    fun handleError(p0: VolleyError) {
 
-   fun handleError(p0:VolleyError){
-
-       if (loadingDialog.isShowing) {
-           loadingDialog.dismiss()
-       }
-       if (activity != null) {
-
-
-           when (p0) {
-
-               is NetworkError-> {
-                   showError("Check your internet connection")
-                   Toast.makeText(context, "Network Error", Toast.LENGTH_SHORT)
-                       .show()
-               }
-
-               is NoConnectionError->{
-                   showError("Server connection failed")
-                   Toast.makeText(context, "Server connection failed", Toast.LENGTH_SHORT)
-                       .show()
-               }
-
-               is TimeoutError -> {
-                   showError("Server is busy, retry")
-                   Toast.makeText(context, "Timeout Error", Toast.LENGTH_SHORT)
-                       .show()
-               }
-               else -> {
-                   if (p0.networkResponse != null && p0.networkResponse.data != null) {
-                       if (p0.networkResponse.statusCode == 401) {
-
-                           Log.d("TAG_123",String(p0.networkResponse.data))
-
-                           val errorData =
-                               Gson().fromJson<ErrorData>(
-                                   String(p0.networkResponse.data), ErrorData::class.java
-                               ) as ErrorData
-
-                           showError(errorData.message)
+        if (loadingDialog.isShowing) {
+            loadingDialog.dismiss()
+        }
+        if (activity != null) {
 
 
-                       }
-                   }
+            when (p0) {
 
-               }
-           }
+                is NetworkError -> {
+                    showError("Check your internet connection")
+                    Toast.makeText(context, "Network Error", Toast.LENGTH_SHORT)
+                        .show()
+                }
+
+                is NoConnectionError -> {
+                    showError("Server connection failed")
+                    Toast.makeText(context, "Server connection failed", Toast.LENGTH_SHORT)
+                        .show()
+                }
+
+                is TimeoutError -> {
+                    showError("Server is busy, retry")
+                    Toast.makeText(context, "Timeout Error", Toast.LENGTH_SHORT)
+                        .show()
+                }
+
+                else -> {
+                    if (p0.networkResponse != null && p0.networkResponse.data != null) {
+                        if (p0.networkResponse.statusCode == 401) {
+
+                            Log.d("TAG_123", String(p0.networkResponse.data))
+
+                            val errorData =
+                                Gson().fromJson<ErrorData>(
+                                    String(p0.networkResponse.data), ErrorData::class.java
+                                ) as ErrorData
+
+                            showError(errorData.message)
+
+
+                        }
+                    }
+
+                }
+            }
 
 
 
 
-           if (!downloadBtn.isEnabled) {
-               downloadBtn.isEnabled = true
-           }
-           if (indicator.isVisible) {
-               indicator.visibility = View.GONE
+            if (!downloadBtn.isEnabled) {
+                downloadBtn.isEnabled = true
+            }
+            if (indicator.isVisible) {
+                indicator.visibility = View.GONE
 
-           }
-           if (dlBtnText.isGone) {
-               dlBtnText.visibility = View.VISIBLE
-           }
-       }
+            }
+            if (dlBtnText.isGone) {
+                dlBtnText.visibility = View.VISIBLE
+            }
+        }
 
-   }
+    }
 
     override fun onResponse(p1: Response<List<DownloadFileItem>>) {
 
@@ -224,16 +260,18 @@ class HomeFragment : Fragment(),
 
 
                     val body = p1.body()
-                    downloadFileItems=ArrayList()
+                    downloadFileItems = ArrayList()
 
                     if (body != null) {
                         downloadFileItems.clear()
                         downloadFileItems.addAll(
                             body
                         )
-                        createDownloadDialog(downloadFileItems,
+                        createDownloadDialog(
+                            downloadFileItems,
 
-                            requireContext())
+                            requireContext()
+                        )
                         adapter.notifyDataSetChanged()
                         downloadDialog.show()
 
@@ -382,38 +420,59 @@ class HomeFragment : Fragment(),
 
 
     private fun playerActivityLauncherLoadInterstitialAd() {
+        if (app.aicpProtector()) {
+            val in1 = InterstitialAd(requireContext(), "245848558610696_245850695277149")
 
 
-        if (app.AD_TYPE == BaseApplication.AdType.ADMOB) {
+            // Create listeners for the Interstitial Ad
+            val interstitialAdListener = object : InterstitialAdListener {
 
-            if (app.aicpProtector()) {
-                MobileAds.initialize(
-                    requireContext()
-                ) { }
-                val adRequest: AdRequest =AdRequest.Builder().build()
+                override fun onInterstitialDisplayed(ad: Ad) {
+                    // Interstitial ad displayed callback
+                    Log.e(TAG, "Interstitial ad displayed.")
+                }
 
+                override fun onInterstitialDismissed(ad: Ad) {
+                    playerActivityFinishedInterstitialAd = null
+                    // Interstitial dismissed callback
+                    Log.e(TAG, "Interstitial ad dismissed.")
+                }
 
-                InterstitialAd.load(requireContext(),
+                override fun onError(ad: Ad, adError: AdError) {
+                    playerActivityFinishedInterstitialAd = null
 
-resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
-                    adRequest,
-                    object : InterstitialAdLoadCallback() {
+                    // Ad error callback
+                    Log.e(
+                        TAG,
+                        "Interstitial ad failed to load: ${adError.errorMessage}"
+                    )
+                }
 
-                        override fun onAdLoaded(interstitialAd: InterstitialAd) {
+                override fun onAdLoaded(ad: Ad) {
+                    // Interstitial ad is loaded and ready to be displayed
+                    Log.d(TAG, "Interstitial ad is loaded and ready to be displayed!")
+                    // Show the ad
+                    playerActivityFinishedInterstitialAd = in1
+                }
 
-                            playerActivityFinishedInterstitialAd = interstitialAd
-                            Log.i(TAG, "onAdLoaded")
-                        }
+                override fun onAdClicked(ad: Ad) {
+                    app.increaseAdClickCount()
+                    // Ad clicked callback
+                    Log.d(TAG, "Interstitial ad clicked!")
+                }
 
-
-                        override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-                            Log.d(TAG, loadAdError.toString())
-                            playerActivityFinishedInterstitialAd = null
-                        }
-                    })
+                override fun onLoggingImpression(ad: Ad) {
+                    // Ad impression logged callback
+                    Log.d(TAG, "Interstitial ad impression logged!")
+                }
             }
 
-
+// Load the Interstitial Ad
+            in1.loadAd(
+                in1.buildLoadAdConfig()
+                    .withAdListener(interstitialAdListener)
+                    .build()
+            )
         }
     }
 
@@ -421,48 +480,10 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
     private val playerActivityLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             if (it.resultCode == Activity.RESULT_OK) {
-                if (app.AD_TYPE == BaseApplication.AdType.ADMOB) {
-
-                    Handler(Looper.getMainLooper()).postDelayed({
-                        playerActivityFinishedInterstitialAd?.let {
-                            playerActivityFinishedInterstitialAd!!.fullScreenContentCallback =
-                                object : FullScreenContentCallback() {
-                                    override fun onAdClicked() {
-
-                                        app.increaseAdClickCount()
-
-                                        Log.d(TAG, "Ad was clicked.")
-                                    }
-
-                                    override fun onAdDismissedFullScreenContent() {
-                                        Log.d(TAG, "Ad dismissed fullscreen content.")
-                                        playerActivityFinishedInterstitialAd = null
-                                    }
-
-                                    override fun onAdFailedToShowFullScreenContent(p0: AdError) {
-                                        Log.e(TAG, "Ad failed to show fullscreen content.")
-                                        playerActivityFinishedInterstitialAd = null
-                                    }
-
-                                    override fun onAdImpression() {
-                                        Log.d(TAG, "Ad recorded an impression.")
-                                    }
-
-                                    override fun onAdShowedFullScreenContent() {
-                                        Log.d(TAG, "Ad showed fullscreen content.")
-                                    }
-                                }
-                            playerActivityFinishedInterstitialAd!!.show(requireActivity())
-
-
-                        }
-                    }, 100)
-
-
-                }
-
+                Handler(Looper.getMainLooper()).postDelayed({
+                    playerActivityFinishedInterstitialAd?.show()
+                }, 100)
             }
-
         }
 
 
@@ -501,8 +522,6 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
             toast(requireContext(), "Storage Permission denied...")
         }
     }
-
-
 
 
     private fun createFolder(): Boolean {
@@ -554,20 +573,19 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
             dlBtnText.visibility = View.GONE
         }
 
-/*
-        volleyGet(
-            requireContext(), "${
-                BuildConfig.BASE_URL
-            }/x-dl-api.php?url=${linkInput.text}"
-        )
+        /*
+                volleyGet(
+                    requireContext(), "${
+                        BuildConfig.BASE_URL
+                    }/x-dl-api.php?url=${linkInput.text}"
+                )
 
 
-*/
+        */
 
 
-
-         val oktHttpClient = OkHttpClient.Builder()
-            .connectTimeout(60*3, TimeUnit.SECONDS)
+        val oktHttpClient = OkHttpClient.Builder()
+            .connectTimeout(60 * 3, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
             .writeTimeout(60, TimeUnit.SECONDS)
             .addInterceptor(NetworkConnectionInterceptor(requireContext()))
@@ -583,7 +601,7 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
                 )
             )
             .build()
-                val call = retrofit.create(TwitterMonkeyAPI::class.java)
+        val call = retrofit.create(TwitterMonkeyAPI::class.java)
 
         call.getData(linkInput.text.toString())
             .enqueue(
@@ -609,9 +627,6 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
             )
 
 
-
-
-
     }
 
 
@@ -619,7 +634,7 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
 
     fun volleyGet(context: Context, endPoint: String) {
 
-        mediaRequest =  object:JsonArrayRequest(
+        mediaRequest = object : JsonArrayRequest(
             Request.Method.GET,
             endPoint,
             null,
@@ -628,28 +643,28 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
             },
             {
 
-             handleError(it)
+                handleError(it)
 
-            }){
+            }) {
             override fun getHeaders(): MutableMap<String, String> {
-                val headers=HashMap<String, String>()
-                headers["referer"]="android-app://${BuildConfig.REFERER}"
+                val headers = HashMap<String, String>()
+                headers["referer"] = "android-app://${BuildConfig.REFERER}"
                 return headers
             }
         }
 
-        mediaRequest!!.retryPolicy = object:RetryPolicy{
+        mediaRequest!!.retryPolicy = object : RetryPolicy {
             override fun getCurrentRetryCount(): Int {
                 return DefaultRetryPolicy.DEFAULT_MAX_RETRIES
             }
 
             override fun getCurrentTimeout(): Int {
-                return 60000*2
+                return 60000 * 2
             }
 
             override fun retry(p0: VolleyError?) {
 
-                if(p0!=null) throw p0
+                if (p0 != null) throw p0
             }
         }
 
@@ -715,15 +730,11 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
         homeFragmentViewModel = ViewModelProvider(this)[HomeFragmentViewModel::class.java]
 
 
-        if (app.AD_TYPE == BaseApplication.AdType.ADMOB) {
-            if (app.aicpProtector()) {
-                loadNativeAdAdmob(
-                    requireContext()
-                )
-            }
+        if (app.aicpProtector()) {
+            loadNativeAdAdmob(
+                requireContext()
+            )
         }
-
-
 
         (requireActivity() as MainActivity).homeFragmentAdHideListener = object : AdHideListener {
 
@@ -733,7 +744,7 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
 
             override fun adDismiss() {
                 val frame =
-                    root.findViewById<CardView>(R.id.fragment_home_admob_native_ad_native_ad_frame)
+                    root.findViewById<CardView>(R.id.native_ad_container)
 
                 if (frame.isVisible) {
                     frame.visibility = View.GONE
@@ -742,49 +753,12 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
         }
 
 
-        homeFragmentViewModel.isDownloadCompleted.observe(requireActivity()) {
-
-            if (it) {
+        homeFragmentViewModel.isDownloadCompleted.observe(requireActivity()) { isDownloadCompleted ->
+            if (isDownloadCompleted) {
                 if (homeFragmentViewModel.isInterstitialAdLoaded.value == true
-
-                    && homeFragmentViewModel.isDownloadCompleted.value == true
+                    && isDownloadCompleted
                 ) {
-
-                    if (app.AD_TYPE == BaseApplication.AdType.ADMOB) {
-
-                        downloadCompletedInterstitialAd?.let {
-                            downloadCompletedInterstitialAd!!.fullScreenContentCallback =
-                                object : FullScreenContentCallback() {
-                                    override fun onAdClicked() {
-
-                                        app.increaseAdClickCount()
-
-                                        Log.d(TAG, "Ad was clicked.")
-                                    }
-
-                                    override fun onAdDismissedFullScreenContent() {
-                                        Log.d(TAG, "Ad dismissed fullscreen content.")
-                                        downloadCompletedInterstitialAd = null
-                                    }
-
-                                    override fun onAdFailedToShowFullScreenContent(p0: AdError) {
-                                        Log.e(TAG, "Ad failed to show fullscreen content.")
-                                        downloadCompletedInterstitialAd = null
-                                    }
-
-                                    override fun onAdImpression() {
-                                        Log.d(TAG, "Ad recorded an impression.")
-                                    }
-
-                                    override fun onAdShowedFullScreenContent() {
-                                        Log.d(TAG, "Ad showed fullscreen content.")
-                                    }
-                                }
-                            downloadCompletedInterstitialAd!!.show(requireActivity())
-
-                        }
-                    }
-
+                    downloadCompletedInterstitialAd?.show()
                 }
             }
         }
@@ -792,47 +766,12 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
         homeFragmentViewModel.isInterstitialAdLoaded.observe(requireActivity()) {
             if (it) {
                 if (homeFragmentViewModel.isInterstitialAdLoaded.value == true
-
                     && homeFragmentViewModel.isDownloadCompleted.value == true
                 ) {
-
-                    if (app.AD_TYPE == BaseApplication.AdType.ADMOB) {
-
-                        downloadCompletedInterstitialAd?.let {
-
-                            downloadCompletedInterstitialAd!!.show(requireActivity())
-                            downloadCompletedInterstitialAd!!.fullScreenContentCallback =
-                                object : FullScreenContentCallback() {
-                                    override fun onAdClicked() {
-                                        app.increaseAdClickCount()
-                                        Log.d(TAG, "Ad was clicked.")
-                                    }
-
-                                    override fun onAdDismissedFullScreenContent() {
-                                        Log.d(TAG, "Ad dismissed fullscreen content.")
-                                        downloadCompletedInterstitialAd = null
-                                    }
-
-                                    override fun onAdFailedToShowFullScreenContent(p0: AdError) {
-                                        Log.e(TAG, "Ad failed to show fullscreen content.")
-                                        downloadCompletedInterstitialAd = null
-                                    }
-
-                                    override fun onAdImpression() {
-                                        Log.d(TAG, "Ad recorded an impression.")
-                                    }
-
-                                    override fun onAdShowedFullScreenContent() {
-                                        Log.d(TAG, "Ad showed fullscreen content.")
-                                    }
-                                }
-
-                        }
-                    }
+                    downloadCompletedInterstitialAd?.show()
                 }
             }
         }
-
 
         val data = requireActivity().intent.getStringExtra(Intent.EXTRA_TEXT)
         data?.let {
@@ -872,8 +811,6 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
             )
             linkInputAction.setOnClickListener {
                 linkInput.text.clear()
-
-
             }
         }
 
@@ -891,13 +828,12 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
     }
 
 
-
-    fun createDownloadDialog(downloadFileItems:ArrayList<DownloadFileItem>,context:Context){
+    fun createDownloadDialog(downloadFileItems: ArrayList<DownloadFileItem>, context: Context) {
 
         val downloadView =
             (context.getSystemService(Context.LAYOUT_INFLATER_SERVICE)
                     as LayoutInflater)
-            .inflate(R.layout.download_dialog, null)
+                .inflate(R.layout.download_dialog, null)
 
         val downloadDialogBuilder = AlertDialog.Builder(context)
 
@@ -914,8 +850,10 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
         downloadDialog = downloadDialogBuilder.create()
 
         adapter =
-            DownloadMediaRecyclerAdapter(downloadDialog,
-                context, downloadFileItems)
+            DownloadMediaRecyclerAdapter(
+                downloadDialog,
+                context, downloadFileItems
+            )
 
         downloadDialog.window?.setBackgroundDrawable(
             android.graphics.Color.TRANSPARENT.toDrawable()
@@ -952,9 +890,10 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
 
                 if (checkPermission(context)) {
 
-                    val downloadingItemView = (context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater).inflate(
-                        R.layout.downloading_item, null
-                    ) as LinearLayout
+                    val downloadingItemView =
+                        (context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater).inflate(
+                            R.layout.downloading_item, null
+                        ) as LinearLayout
 
                     downloadVariant(
                         context,
@@ -1001,8 +940,6 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
 
         dlMediaRecyclerView.adapter = adapter
     }
-
-
 
 
     private fun downloadFile(
@@ -1082,15 +1019,13 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
 
                 outputFileUri = outputFile.absolutePath
 
-                output=FileOutputStream(outputFileUri)
-
+                output = FileOutputStream(outputFileUri)
 
 
             } else {
 
                 val resolver = context.contentResolver
                 val values = ContentValues()
-
 
 
                 val ext: String
@@ -1123,12 +1058,16 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
                             File("${Environment.getExternalStorageDirectory()}/${Environment.DIRECTORY_MOVIES}/$folderName/$uniqueFileName")
 
                     }
-                    values.put(MediaStore.Video
-                        .Media
-                        .DISPLAY_NAME, uniqueFileName)
-                    values.put(MediaStore.Video
-                        .Media
-                        .MIME_TYPE, "video/mp4")
+                    values.put(
+                        MediaStore.Video
+                            .Media
+                            .DISPLAY_NAME, uniqueFileName
+                    )
+                    values.put(
+                        MediaStore.Video
+                            .Media
+                            .MIME_TYPE, "video/mp4"
+                    )
                     values.put(
                         MediaStore.Video.Media.RELATIVE_PATH,
                         "${Environment.DIRECTORY_MOVIES}/$folderName/"
@@ -1170,17 +1109,17 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
 
 
                 if (item.mediaType == "animated_gif") {
-                    output=resolver.openOutputStream(savedUri)!!
+                    output = resolver.openOutputStream(savedUri)!!
 
                 } else {
 
-                    output=resolver.openOutputStream(savedUri)!!
+                    output = resolver.openOutputStream(savedUri)!!
                 }
 
 
                 val cursor: Cursor?
                 val proj = arrayOf(MediaStore.Video.Media.DATA)
-                cursor =context.contentResolver.query(savedUri, proj, null, null, null)
+                cursor = context.contentResolver.query(savedUri, proj, null, null, null)
                 val columnIndex =
                     cursor!!.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)
                 cursor.moveToFirst()
@@ -1188,9 +1127,6 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
                 cursor.close()
 
             }
-
-
-
 
 
             var count: Int
@@ -1386,7 +1322,6 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
     }
 
 
-
     fun downloadVariant(
         context: Context,
         variant: Variant,
@@ -1491,36 +1426,49 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
         lifecycleScope.launch(Dispatchers.IO) {
 
             try {
-               launch(Dispatchers.Main) {
-                    if (app.AD_TYPE == BaseApplication.AdType.ADMOB) {
+                launch(Dispatchers.Main) {
+                    if (app.aicpProtector()) {
+                        val interstitialAd = InterstitialAd(
+                            context,
+                            "245848558610696_245850821943803"
+                        )
+                        interstitialAd.loadAd(
+                            interstitialAd.buildLoadAdConfig()
+                                .withAdListener(object : InterstitialAdListener {
 
-                        if (app.aicpProtector()){
-                            MobileAds.initialize(context) { }
-
-                            val adRequest: AdRequest =
-                                AdRequest.Builder().build()
-
-                            InterstitialAd.load(context,
-
-                                resources.getString(R.string.ADMOB_HOME_INTERSTITIAL),adRequest,
-                                object : InterstitialAdLoadCallback() {
-                                    override fun onAdLoaded(interstitialAd: InterstitialAd) {
-
+                                    override fun onAdLoaded(ad: Ad) {
                                         downloadCompletedInterstitialAd = interstitialAd
-                                        homeFragmentViewModel.updateInterstitialAdLoaded(
-                                            true
-                                        )
-                                        Log.i(TAG, "onAdLoaded")
+                                        homeFragmentViewModel.updateInterstitialAdLoaded(true)
+                                        Log.i(TAG, "Facebook Interstitial onAdLoaded")
                                     }
 
-                                    override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-                                        Log.d(TAG, loadAdError.toString())
+                                    override fun onError(ad: Ad, adError: AdError) {
+                                        Log.e(
+                                            TAG,
+                                            "Facebook Interstitial failed: ${adError.errorMessage}"
+                                        )
                                         downloadCompletedInterstitialAd = null
                                     }
-                                })
 
-                        }
+                                    override fun onInterstitialDisplayed(ad: Ad) {
+                                        Log.d(TAG, "Facebook Interstitial displayed")
+                                    }
 
+                                    override fun onInterstitialDismissed(ad: Ad) {
+                                        downloadCompletedInterstitialAd = null
+                                        Log.d(TAG, "Facebook Interstitial dismissed")
+                                    }
+
+                                    override fun onAdClicked(ad: Ad) {
+                                        app.increaseAdClickCount()
+                                        Log.d(TAG, "Facebook Interstitial clicked")
+                                    }
+
+                                    override fun onLoggingImpression(ad: Ad) {
+                                        Log.d(TAG, "Facebook Interstitial impression logged")
+                                    }
+                                }).build()
+                        )
                     }
                 }
 
@@ -1599,14 +1547,9 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
 
                 } else {
                     launch(Dispatchers.Main) {
-                        if (app.AD_TYPE == BaseApplication.AdType.ADMOB) {
-                            homeFragmentViewModel.updateDownloadCompleted(true)
-
-                        }
+                        homeFragmentViewModel.updateDownloadCompleted(true)
                     }
-
                 }
-
             } catch (e: Exception) {
                 launch(Dispatchers.Main) {
 
@@ -1647,12 +1590,6 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
     }
 
 
-
-
-
-
-
-
     private val editTextListener = object : TextWatcher {
         override fun beforeTextChanged(
             s: CharSequence?,
@@ -1666,11 +1603,8 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
         override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
 
             if (adTypeChanged) {
-                if (app.AD_TYPE == BaseApplication.AdType.ADMOB) {
-                    if (app.aicpProtector()) {
-                        loadNativeAdAdmob(requireContext())
-                    }
-
+                if (app.aicpProtector()) {
+                    loadNativeAdAdmob(requireContext())
                 }
             }
             adTypeChanged = false
@@ -1749,12 +1683,9 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
         super.onStart()
         view?.let {
             if (adTypeChanged) {
-                if (app.AD_TYPE == BaseApplication.AdType.ADMOB) {
-                    if (isAdded) {
-
-                        if (app.aicpProtector()) {
-                            loadNativeAdAdmob(requireContext())
-                        }
+                if (isAdded) {
+                    if (app.aicpProtector()) {
+                        loadNativeAdAdmob(requireContext())
                     }
                 }
             }
@@ -1764,176 +1695,126 @@ resources.getString(R.string.ADMOB_HOME_INTERSTITIAL_VIDEO_PLAYER),
 
     private fun loadNativeAdAdmob(context: Context) {
 
-        MobileAds.initialize(context)
+        val nativeAd = NativeAd(context, "245848558610696_245851881943697")
 
-        val adLoader = AdLoader.Builder(
-            context,
+        val nativeAdListener = object : NativeAdListener {
 
-            resources.getString(
-                R.string.ADMOB_HOME_NATIVE
-            )
-        )
-            .forNativeAd { nativeAd ->
-
-                val frame =
-                    root.findViewById<CardView>(R.id.fragment_home_admob_native_ad_native_ad_frame)
-
-                val nativeAdView = (LayoutInflater.from(
-                    context
-                ).inflate(
-                    R.layout.admob_native_ad_layout,
-                    null
-                )) as com.google.android.gms.ads.nativead.NativeAdView
-
-
-                nativeAdView.headlineView =
-                    nativeAdView.findViewById<TextView>(R.id.admob_native_ad_headline)
-                nativeAdView.advertiserView =
-                    nativeAdView.findViewById<TextView>(R.id.admob_native_ad_advertiser)
-                nativeAdView.bodyView =
-                    nativeAdView.findViewById<TextView>(R.id.admob_native_ad_body_text)
-                nativeAdView.starRatingView =
-                    nativeAdView.findViewById<RatingBar>(R.id.admob_native_ad_star_rating)
-                nativeAdView.mediaView =
-                    nativeAdView.findViewById<MediaView>(R.id.admob_native_ad_media_view)
-                nativeAdView.callToActionView =
-                    nativeAdView.findViewById<RelativeLayout>(R.id.ad_add_call_to_action)
-                nativeAdView.iconView =
-                    nativeAdView.findViewById<ImageView>(R.id.admob_native_ad_icon)
-
-
-
-                (nativeAdView.headlineView as TextView).text = nativeAd.headline
-
-                if (nativeAd.headline == null) {
-                    (nativeAdView.headlineView as TextView).visibility = View.GONE
-                } else {
-                    (nativeAdView.headlineView as TextView).text = nativeAd.body
-                    (nativeAdView.headlineView as TextView).visibility = View.VISIBLE
-                }
-
-                if (nativeAd.body == null) {
-                    (nativeAdView.bodyView as TextView).visibility = View.GONE
-                } else {
-                    (nativeAdView.bodyView as TextView).text = nativeAd.body
-                    (nativeAdView.bodyView as TextView).visibility = View.VISIBLE
-                }
-
-                if (nativeAd.advertiser == null) {
-                    (nativeAdView.advertiserView as TextView).visibility = View.GONE
-                } else {
-                    (nativeAdView.advertiserView as TextView).text = nativeAd.advertiser
-                    (nativeAdView.advertiserView as TextView).visibility = View.VISIBLE
-
-                }
-
-                if (nativeAd.starRating == null) {
-                    (nativeAdView.starRatingView as RatingBar).visibility = View.GONE
-                } else {
-                    (nativeAdView.starRatingView as RatingBar).rating =
-                        nativeAd.starRating!!.toFloat()
-                    (nativeAdView.starRatingView as RatingBar).visibility = View.VISIBLE
-
-                }
-
-                if (nativeAd.icon == null) {
-                    (nativeAdView.iconView as ImageView).visibility = View.GONE
-                } else {
-                    (nativeAdView.iconView as ImageView).setImageDrawable(nativeAd.icon!!.drawable)
-                    (nativeAdView.iconView as ImageView).visibility = View.VISIBLE
-
-                }
-
-                if (nativeAd.callToAction == null) {
-
-                    (nativeAdView.callToActionView as RelativeLayout).visibility = View.GONE
-
-                } else {
-                    (nativeAdView.findViewById(R.id.admob_call_to_action_text) as TextView).text =
-                        nativeAd.callToAction
-                    (nativeAdView.callToActionView as RelativeLayout).visibility =
-                        View.VISIBLE
-                }
-                if (nativeAd.mediaContent == null) {
-                    (nativeAdView.mediaView as MediaView)
-                        .visibility = View.GONE
-                } else {
-                    val mediaView =
-                        (nativeAdView.mediaView as MediaView)
-
-                    mediaView.mediaContent = nativeAd.mediaContent
-
-                    mediaView.mediaContent?.let {
-
-                        if (it.hasVideoContent()) {
-
-                            it.videoController.apply {
-
-                                if (!isMuted) {
-                                    mute(true)
-                                }
-                                play()
-                            }
-
-                        }
-
-                    }
-
-
-
-
-                    mediaView.setImageScaleType(
-                        ImageView.ScaleType.CENTER_CROP
-                    )
-                    nativeAdView.setOnHierarchyChangeListener(
-                        object : ViewGroup.OnHierarchyChangeListener {
-                            override fun onChildViewAdded(parent: View?, child: View?) {
-
-                                if (child is ImageView) {
-                                    child.adjustViewBounds = true
-                                    child.scaleType = ImageView.ScaleType.CENTER_CROP
-                                }
-                            }
-
-                            override fun onChildViewRemoved(parent: View?, child: View?) {
-
-                            }
-
-                        }
-                    )
-                    mediaView.visibility = View.VISIBLE
-                }
-                nativeAdView.setNativeAd(nativeAd)
-                frame.removeAllViews()
-                frame.addView(nativeAdView)
+            override fun onMediaDownloaded(ad: Ad) {
+                // Native ad finished downloading all assets
+                Log.e(TAG, "Native ad finished downloading all assets.")
             }
-            .withAdListener(object : AdListener() {
 
-                override fun onAdClicked() {
-                    super.onAdClicked()
-                    app.increaseAdClickCount()
+            override fun onError(ad: Ad, adError: AdError) {
+                // Native ad failed to load
+                Log.e(TAG, "Native ad failed to load: ${adError.errorMessage}")
+            }
 
+            override fun onAdLoaded(ad: Ad) {
+                if (nativeAd != ad) {
+                    return
                 }
 
-                override fun onAdLoaded() {
-                    super.onAdLoaded()
-                    Log.i(TAG, "Native ad loaded")
-                }
+                // Inflate Native Ad into Container
+                inflateAd(context, nativeAd);
+                // Native ad is loaded and ready to be displayed
+                Log.d(TAG, "Native ad is loaded and ready to be displayed!")
+            }
 
-                override fun onAdFailedToLoad(p0: LoadAdError) {
-                    super.onAdFailedToLoad(p0)
-                    Log.i(TAG, "Native ad failed to load {${p0.message}}")
+            override fun onAdClicked(ad: Ad) {
+                app.increaseAdClickCount()
+                // Native ad clicked
+                Log.d(TAG, "Native ad clicked!")
+            }
 
-                }
+            override fun onLoggingImpression(ad: Ad) {
+                // Native ad impression
+                Log.d(TAG, "Native ad impression logged!")
+            }
+        }
 
-            })
-            .build()
-
-        adLoader.loadAd(
-            AdRequest.Builder()
+        nativeAd.loadAd(
+            nativeAd.buildLoadAdConfig()
+                .withAdListener(nativeAdListener)
                 .build()
         )
 
+    }
+
+    private fun inflateAd(context: Context, nativeAd: NativeAd) {
+
+        // Unregister previous ad view
+        nativeAd.unregisterView()
+
+        // Add the Ad view into the ad container
+        val nativeAdLayout =
+            root.findViewById<NativeAdLayout>(R.id.native_ad_container)
+
+        val inflater = LayoutInflater.from(context)
+
+        // Inflate the Ad view (your custom layout)
+        val adView = inflater.inflate(
+            R.layout.native_ad_layout_1,
+            nativeAdLayout,
+            false
+        ) as LinearLayout
+
+        nativeAdLayout.addView(adView)
+
+        // Add the AdOptionsView (three-dot menu)
+        val adChoicesContainer =
+            adView.findViewById<LinearLayout>(R.id.ad_choices_container)
+
+        val adOptionsView =
+            AdOptionsView(context, nativeAd, nativeAdLayout)
+
+        adChoicesContainer.removeAllViews()
+        adChoicesContainer.addView(adOptionsView, 0)
+
+        // Create native UI using ad metadata
+        val nativeAdIcon =
+            adView.findViewById<MediaView>(R.id.native_ad_icon)
+
+        val nativeAdTitle =
+            adView.findViewById<TextView>(R.id.native_ad_title)
+
+        val nativeAdMedia =
+            adView.findViewById<MediaView>(R.id.native_ad_media)
+
+        val nativeAdSocialContext =
+            adView.findViewById<TextView>(R.id.native_ad_social_context)
+
+        val nativeAdBody =
+            adView.findViewById<TextView>(R.id.native_ad_body)
+
+        val sponsoredLabel =
+            adView.findViewById<TextView>(R.id.native_ad_sponsored_label)
+
+        val nativeAdCallToAction =
+            adView.findViewById<Button>(R.id.native_ad_call_to_action)
+
+        // Set the text and visibility
+        nativeAdTitle.text = nativeAd.advertiserName
+        nativeAdBody.text = nativeAd.adBodyText
+        nativeAdSocialContext.text = nativeAd.adSocialContext
+
+        nativeAdCallToAction.visibility =
+            if (nativeAd.hasCallToAction()) View.VISIBLE else View.INVISIBLE
+
+        nativeAdCallToAction.text = nativeAd.adCallToAction
+        sponsoredLabel.text = nativeAd.sponsoredTranslation
+
+        // Create a list of clickable views
+        val clickableViews = ArrayList<View>()
+        clickableViews.add(nativeAdTitle)
+        clickableViews.add(nativeAdCallToAction)
+
+        // Register views for interaction
+        nativeAd.registerViewForInteraction(
+            adView,
+            nativeAdMedia,
+            nativeAdIcon,
+            clickableViews
+        )
     }
 
 

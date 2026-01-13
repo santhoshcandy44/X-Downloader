@@ -19,12 +19,10 @@ import android.widget.*
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.FullScreenContentCallback
-import com.google.android.gms.ads.LoadAdError
-import com.google.android.gms.ads.MobileAds
-import com.google.android.gms.ads.interstitial.InterstitialAd
-import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.facebook.ads.Ad
+import com.facebook.ads.AdError
+import com.facebook.ads.InterstitialAd
+import com.facebook.ads.InterstitialAdListener
 import com.x.twitter.video.downloader.*
 import com.x.twitter.video.downloader.ui.alldownloads.AllDownloadsDatabaseBuilder
 import com.x.twitter.video.downloader.ui.alldownloads.AllDownloadsFragment
@@ -102,18 +100,18 @@ class DownloadedRecyclerViewAdapter(
                             MediaScannerConnection
                                 .scanFile(
                                     context,
-                                   arrayOf(items[position].absPath),
+                                    arrayOf(items[position].absPath),
                                     null
-                                ) { path, uri ->
+                                ) { _, uri ->
 
                                     val shareIntent = Intent(
                                         Intent.ACTION_SEND
                                     ).apply {
-                                         if (items[position].mediaType == "video") {
-                                                type = "video/*"
-                                         }else{
-                                                type = "video/*"
-                                         }
+                                        if (items[position].mediaType == "video") {
+                                            type = "video/*"
+                                        } else {
+                                            type = "video/*"
+                                        }
 
                                         putExtra(Intent.EXTRA_STREAM, uri)
 
@@ -134,8 +132,8 @@ class DownloadedRecyclerViewAdapter(
 
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
 
-                                if(File(items[position].absPath).exists()
-                                ){
+                                if (File(items[position].absPath).exists()
+                                ) {
                                     item.contentUri?.let {
                                         context.contentResolver.delete(
                                             Uri.parse(it), null
@@ -148,11 +146,10 @@ class DownloadedRecyclerViewAdapter(
                                     deleteFile(item.id)
 
 
-                                }else{
+                                } else {
                                     notifyItemChanged(position)
 
                                 }
-
 
 
                             } else {
@@ -160,7 +157,7 @@ class DownloadedRecyclerViewAdapter(
                                 if (fragment.checkPermission(context)) {
 
 
-                                    if(File(items[position].absPath).exists()){
+                                    if (File(items[position].absPath).exists()) {
                                         file.delete()
                                         MediaScannerConnection.scanFile(
                                             context,
@@ -168,7 +165,7 @@ class DownloadedRecyclerViewAdapter(
                                         )
 
                                         deleteFile(item.id)
-                                    }else{
+                                    } else {
                                         notifyItemChanged(position)
                                     }
 
@@ -237,7 +234,7 @@ class DownloadedRecyclerViewAdapter(
                 popUpMenu.setOnMenuItemClickListener {
                     when (it.itemId) {
 
-                        R.id.more_option_remove-> {
+                        R.id.more_option_remove -> {
                             deleteFile(item.id)
                             true
                         }
@@ -281,11 +278,8 @@ class DownloadedRecyclerViewAdapter(
                 intent.data = Uri.parse(items[position].absPath)
                 fragment.playerActivityLauncher.launch(intent)
                 val app = activity.application as Application
-                if (app.AD_TYPE == BaseApplication.AdType.ADMOB) {
-                    if (app.aicpProtector()) {
-                        fragment.allDownloadsPlayerActivityFinishedLoadInterstitialAd()
-
-                    }
+                if (app.aicpProtector()) {
+                    fragment.allDownloadsPlayerActivityFinishedLoadInterstitialAd()
                 }
             } else {
                 Toast.makeText(
@@ -384,7 +378,7 @@ class DownloadedRecyclerViewAdapter(
 
                 val requireContext = context
 
-                 fragment.lifecycleScope.launch(Dispatchers.IO) {
+                fragment.lifecycleScope.launch(Dispatchers.IO) {
 
                     try {
 
@@ -419,7 +413,7 @@ class DownloadedRecyclerViewAdapter(
 
                         val isDownloaded: Boolean
 
-                       launch(Dispatchers.Main){
+                        launch(Dispatchers.Main) {
                             if (loadingDialog.isShowing) {
                                 loadingDialog.dismiss()
                             }
@@ -469,78 +463,61 @@ class DownloadedRecyclerViewAdapter(
 
                         } else {
                             launch(Dispatchers.Main) {
-                                if (app.AD_TYPE == BaseApplication.AdType.ADMOB) {
+                                mInterstitialAd = InterstitialAd(
+                                    activity,
+                                    "245848558610696_245851035277115"
+                                )
 
-                                    MobileAds.initialize(
-                                        requireContext
-                                    ) { }
-                                    val adRequest: AdRequest = AdRequest.Builder().build()
+                                // Load the ad
+                                mInterstitialAd?.loadAd(
+                                    mInterstitialAd?.buildLoadAdConfig()
+                                        ?.withAdListener(object : InterstitialAdListener {
 
-                                    InterstitialAd.load(requireContext,
-                                        requireContext.getString(
-                                            R.string.ADMOB_ALL_DOWNLOADS_INTERSTITIAL_VIDEO_PLAYER
-                                        ),
-                                        adRequest,
-                                        object : InterstitialAdLoadCallback() {
-                                            override fun onAdLoaded(interstitialAd: InterstitialAd) {
-
-                                                mInterstitialAd = interstitialAd
-
-
-                                                mInterstitialAd!!.show(activity)
-                                                mInterstitialAd!!.fullScreenContentCallback =
-                                                    object : FullScreenContentCallback() {
-                                                        override fun onAdClicked() {
-                                                            Log.d(TAG, "Ad was clicked.")
-                                                        }
-
-                                                        override fun onAdDismissedFullScreenContent() {
-                                                            Log.d(
-                                                                TAG,
-                                                                "Ad dismissed fullscreen content."
-                                                            )
-                                                            mInterstitialAd = null
-                                                        }
-
-                                                        override fun onAdFailedToShowFullScreenContent(
-                                                            p0: com.google.android.gms.ads.AdError
-                                                        ) {
-                                                            Log.e(
-                                                                TAG,
-                                                                "Ad failed to show fullscreen content."
-                                                            )
-                                                            mInterstitialAd = null
-                                                        }
-
-                                                        override fun onAdImpression() {
-                                                            Log.d(TAG, "Ad recorded an impression.")
-                                                        }
-
-                                                        override fun onAdShowedFullScreenContent() {
-                                                            Log.d(
-                                                                TAG,
-                                                                "Ad showed fullscreen content."
-                                                            )
-                                                        }
-                                                    }
-
-
-                                                Log.i(TAG, "onAdLoaded")
+                                            override fun onAdLoaded(ad: Ad) {
+                                                Log.i(TAG, "Facebook Interstitial onAdLoaded")
+                                                mInterstitialAd?.show()
                                             }
 
-                                            override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-                                                Log.d(TAG, loadAdError.toString())
+                                            override fun onError(ad: Ad, adError: AdError) {
+                                                Log.e(
+                                                    TAG,
+                                                    "Facebook Interstitial failed: ${adError.errorMessage}"
+                                                )
                                                 mInterstitialAd = null
                                             }
+
+                                            override fun onInterstitialDisplayed(ad: Ad) {
+                                                Log.d(
+                                                    TAG,
+                                                    "Facebook Interstitial showed fullscreen content."
+                                                )
+                                            }
+
+                                            override fun onInterstitialDismissed(ad: Ad) {
+                                                Log.d(
+                                                    TAG,
+                                                    "Facebook Interstitial dismissed fullscreen content."
+                                                )
+                                                mInterstitialAd = null
+                                            }
+
+                                            override fun onAdClicked(ad: Ad) {
+                                                app.increaseAdClickCount()
+                                                Log.d(TAG, "Facebook Interstitial was clicked.")
+                                            }
+
+                                            override fun onLoggingImpression(ad: Ad) {
+                                                Log.d(
+                                                    TAG,
+                                                    "Facebook Interstitial impression logged."
+                                                )
+                                            }
                                         })
-                                }
+                                        ?.build()
+                                )
                             }
-
-
                         }
-
                     } catch (e: Exception) {
-
                         launch(Dispatchers.Main) {
                             if (loadingDialog.isShowing) {
                                 loadingDialog.dismiss()
@@ -549,7 +526,6 @@ class DownloadedRecyclerViewAdapter(
                                 if (downloadedCloudImage.visibility == View.GONE) {
                                     downloadedCloudImage.visibility = View.VISIBLE
                                 }
-
                             }
                         }
 
@@ -564,7 +540,7 @@ class DownloadedRecyclerViewAdapter(
                                 alertDialog.setCancelable(true)
                                 alertDialog.setPositiveButton(
                                     "Dismiss",
-                                ) { dialog, which -> dialog!!.dismiss() }
+                                ) { dialog, _ -> dialog!!.dismiss() }
                                 alertDialog.show()
                             }
                         }
@@ -670,7 +646,7 @@ class DownloadedRecyclerViewAdapter(
                         File("${Environment.getExternalStorageDirectory()}/$folderName/$uniqueFileName")
 
                 }
-                output= FileOutputStream(outputFile)
+                output = FileOutputStream(outputFile)
                 outputFileUri = outputFile.absolutePath
 
 
@@ -703,17 +679,20 @@ class DownloadedRecyclerViewAdapter(
                             File("${Environment.getExternalStorageDirectory()}/${Environment.DIRECTORY_MOVIES}/$folderName/$uniqueFileName")
 
                     }
-                    values.put(MediaStore.Video
-                        .Media
-                        .DISPLAY_NAME, uniqueFileName)
-                    values.put(MediaStore.Video
-                        .Media
-                        .MIME_TYPE, "video/mp4")
+                    values.put(
+                        MediaStore.Video
+                            .Media
+                            .DISPLAY_NAME, uniqueFileName
+                    )
+                    values.put(
+                        MediaStore.Video
+                            .Media
+                            .MIME_TYPE, "video/mp4"
+                    )
                     values.put(
                         MediaStore.Video.Media.RELATIVE_PATH,
                         "${Environment.DIRECTORY_MOVIES}/$folderName/"
                     )
-
 
 
                 } else {
@@ -748,12 +727,12 @@ class DownloadedRecyclerViewAdapter(
                 }
 
                 savedUri = resolver.insert(contentUri, values)!!
-                output=resolver.openOutputStream(savedUri)!!
+                output = resolver.openOutputStream(savedUri)!!
 
 
                 val cursor: Cursor?
                 val proj = arrayOf(MediaStore.Video.Media.DATA)
-                cursor =context.contentResolver.query(savedUri, proj, null, null, null)
+                cursor = context.contentResolver.query(savedUri, proj, null, null, null)
                 val columnIndex =
                     cursor!!.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)
                 cursor.moveToFirst()
@@ -881,7 +860,7 @@ class DownloadedRecyclerViewAdapter(
 
 
             return true
-        } catch (e: IOException) {
+        } catch (_: IOException) {
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 savedUri?.let {
@@ -978,12 +957,12 @@ class DownloadedRecyclerViewAdapter(
 
     class VH(itemView: View) : RecyclerView.ViewHolder(itemView)
 
-    fun updateItems(){
-        val tempItems=ArrayList<DownloadedFileItem>()
-        for(item in items){
+    fun updateItems() {
+        val tempItems = ArrayList<DownloadedFileItem>()
+        for (item in items) {
             val isExists = File(item.absPath).exists()
 
-            if(isExists){
+            if (isExists) {
                 tempItems.add(item)
             }
         }
@@ -991,7 +970,7 @@ class DownloadedRecyclerViewAdapter(
         items.addAll(tempItems)
         notifyDataSetChanged()
 
-        if(items.isEmpty()){
+        if (items.isEmpty()) {
             if (fragment.allDownloadsProgressBar.visibility == View.VISIBLE) {
                 fragment.allDownloadsProgressBar.visibility = View.GONE
             }

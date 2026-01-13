@@ -6,85 +6,57 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import android.content.SharedPreferences
-import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
 import android.view.MenuItem
 import android.view.View
-import android.view.WindowInsets
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
-import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.registerForActivityResult
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
-import com.google.android.gms.ads.MobileAds
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.navigation.NavigationBarView
 import com.google.android.play.core.appupdate.AppUpdateInfo
 import com.google.android.play.core.appupdate.AppUpdateManager
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.appupdate.AppUpdateOptions
 import com.google.android.play.core.install.InstallStateUpdatedListener
 import com.google.android.play.core.install.model.ActivityResult
 import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.InstallStatus
 import com.google.android.play.core.install.model.UpdateAvailability
-import com.google.android.play.core.ktx.*
-import com.google.android.ump.ConsentForm
-import com.google.android.ump.ConsentInformation
-import com.google.android.ump.ConsentRequestParameters
-import com.google.android.ump.UserMessagingPlatform
+import com.google.android.play.core.ktx.bytesDownloaded
+import com.google.android.play.core.ktx.installErrorCode
+import com.google.android.play.core.ktx.installStatus
 import com.x.twitter.video.downloader.databinding.ActivityMainBinding
 import com.x.twitter.video.downloader.ui.alldownloads.AllDownloadsFragment
 import com.x.twitter.video.downloader.ui.home.HomeFragment
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
-import com.facebook.appevents.AppEventsLogger;
 
 class MainActivity : AppCompatActivity(),
     NavigationBarView.OnItemSelectedListener, SharedPreferences.OnSharedPreferenceChangeListener {
 
-
-    /**
-     * This function assumes logger is an instance of AppEventsLogger and has been
-     * created using AppEventsLogger.newLogger() call.
-     */
-
-
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
-
-
         sharedPreferences?.let {
 
-            if (key.equals("ad_type")) {
-                val adType = adMeta.getString("ad_type", null)
-
-                (application as Application).AD_TYPE = if (adType == null) {
-                    null
-                } else {
-                    BaseApplication.AdType.valueOf(adType)
-                }
-
-                homeFragmentAdHideListener?.let {
-
-                    homeFragmentAdHideListener!!.adShow()
-                }
-
-                allDownloadsFragmentAdHideListener?.let {
-                    allDownloadsFragmentAdHideListener!!.adShow()
-                }
-
+            homeFragmentAdHideListener?.let {
+                homeFragmentAdHideListener!!.adShow()
             }
+
+            allDownloadsFragmentAdHideListener?.let {
+                allDownloadsFragmentAdHideListener!!.adShow()
+            }
+
 
             if (key.equals("ad_click_count")) {
                 val adClickCount = sharedPreferences
@@ -113,9 +85,7 @@ class MainActivity : AppCompatActivity(),
                     editor.commit()
                 }
             }
-
         }
-
     }
 
     var homeFragmentAdHideListener: AdHideListener? = null
@@ -136,69 +106,6 @@ class MainActivity : AppCompatActivity(),
     private lateinit var adMeta: SharedPreferences
     private lateinit var appMeta: SharedPreferences
     var updateType = -1
-
-    private lateinit var consentInformation: ConsentInformation
-    // Use an atomic boolean to initialize the Google Mobile Ads SDK and load ads once.
-    private var isMobileAdsInitializeCalled = AtomicBoolean(false)
-
-    private var TAG="TAG$123"
-    private fun requestConsentForm(){
-
-
-        // Create a ConsentRequestParameters object.
-        val params = ConsentRequestParameters
-
-            .Builder()
-            .build()
-
-        consentInformation = UserMessagingPlatform.getConsentInformation(this)
-        consentInformation.requestConsentInfoUpdate(
-            this,
-            params,
-            {
-                UserMessagingPlatform.loadAndShowConsentFormIfRequired(
-                    this@MainActivity,
-                    ConsentForm.OnConsentFormDismissedListener {
-                            loadAndShowError ->
-                        // Consent gathering failed.
-                        Log.w(TAG, String.format("%s: %s",
-                            loadAndShowError?.errorCode,
-                            loadAndShowError?.message))
-
-                        // Consent has been gathered.
-                        if (consentInformation.canRequestAds()) {
-                            initializeMobileAdsSdk()
-                        }
-                    }
-                )
-            },
-            {
-                    requestConsentError ->
-                // Consent gathering failed.
-                Log.w(TAG, String.format("%s: %s",
-                    requestConsentError.errorCode,
-                    requestConsentError.message))
-            })
-
-        // Check if you can initialize the Google Mobile Ads SDK in parallel
-        // while checking for new consent information. Consent obtained in
-        // the previous session can be used to request ads.
-        if (consentInformation.canRequestAds()) {
-            initializeMobileAdsSdk()
-        }
-
-    }
-    private fun initializeMobileAdsSdk() {
-        if (isMobileAdsInitializeCalled.getAndSet(true)) {
-            return
-        }
-
-        // Initialize the Google Mobile Ads SDK.
-        MobileAds.initialize(this)
-
-        // TODO: Request an ad.
-        // InterstitialAd.load(...)
-    }
 
     lateinit var appTitleView:LinearLayout
     lateinit var allDownloadsView:LinearLayout
@@ -223,15 +130,14 @@ class MainActivity : AppCompatActivity(),
         appTitleView=findViewById(R.id.app_title)
         allDownloadsView=findViewById(R.id.all_downloads_bar)
         moreView=findViewById(R.id.more_bar)
-        requestConsentForm()
 
 
         updateType = (application as Application).UPDATE_TYPE
 
-        adMeta = getSharedPreferences("ad_meta", Context.MODE_PRIVATE)
+        adMeta = getSharedPreferences("ad_meta", MODE_PRIVATE)
         adMeta.registerOnSharedPreferenceChangeListener(this)
 
-        appMeta = getSharedPreferences("app_meta", Context.MODE_PRIVATE)
+        appMeta = getSharedPreferences("app_meta", MODE_PRIVATE)
 
         val isFirstTime = appMeta.getBoolean("app_launch", true)
         appMeta.edit().apply {
@@ -290,20 +196,14 @@ class MainActivity : AppCompatActivity(),
                 }
 
             }
-
-
-        } else {
+        }
+        else {
             val lastTimeUpdate = appMeta.getLong("last_time_update", 0)
-
 
             if (lastTimeUpdate <= 0) {
                 appUpdateManager = AppUpdateManagerFactory.create(applicationContext)
                 invokeUpdateFlow(appUpdateManager)
-
-
             } else {
-
-
                 if (System.currentTimeMillis() - lastTimeUpdate > if (BuildConfig.DEBUG) TimeUnit.MINUTES.toMillis(
                         1
                     ) else TimeUnit.DAYS.toMillis(4)
@@ -319,9 +219,6 @@ class MainActivity : AppCompatActivity(),
         }
 
 
-
-
-
         if (isFirstTime) {
             //first time
         } else {
@@ -332,12 +229,9 @@ class MainActivity : AppCompatActivity(),
 
                     QuickTipOneDialog(
 
-                    )
-                        .show(
+                    ).show(
                             supportFragmentManager, "qt1"
                         )
-
-
                 }
                 appMeta.edit().apply {
                     remove("tip_launch_count")
@@ -410,7 +304,6 @@ class MainActivity : AppCompatActivity(),
 
     override fun onResume() {
         super.onResume()
-
         if (updateType == 0) {
             val updateInfo = appUpdateManager.appUpdateInfo
             updateInfo.addOnSuccessListener(this) {
@@ -420,7 +313,6 @@ class MainActivity : AppCompatActivity(),
                 when (it.updateAvailability()) {
 
                     UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS -> {
-
                         if (it.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)) {
 
                             try {

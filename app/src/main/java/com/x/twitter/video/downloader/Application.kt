@@ -1,29 +1,15 @@
 package com.x.twitter.video.downloader
 
-
-import android.app.AlarmManager
-import android.app.PendingIntent
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
-import android.os.Build
-import android.util.Log
-import android.widget.Toast
-import androidx.lifecycle.*
 import com.facebook.ads.AudienceNetworkAds
-import com.google.android.gms.ads.MobileAds
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.*
-
 
 /*
-
-
 class AdMetaInfo : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
 
@@ -82,54 +68,22 @@ class AdMetaInfo : BroadcastReceiver() {
  */
 
 class Application : BaseApplication() {
-
-
-    override fun onStart(owner: LifecycleOwner) {
-        super.onStart(owner)
-
-        if (AD_TYPE == AdType.ADMOB) {
-            if (aicpProtector()) {
-                loadAppOpenAdmobAd()
-            }
-        }
-    }
-
-
-
     override fun onCreate() {
         super.onCreate()
-
-        registerActivityLifecycleCallbacks(this@Application)
-        ProcessLifecycleOwner.get().lifecycle.addObserver(this@Application)
-
         CoroutineScope(Dispatchers.Main).launch {
             withContext(Dispatchers.Default){
+                AudienceNetworkAds.initialize(this@Application)
 
-                MobileAds.initialize(this@Application) { }
-
-                if (appOpenAdManager == null) {
-                    appOpenAdManager = AppOpenAdManager()
-                }
 
                 val adMeta = getSharedPreferences("ad_meta", Context.MODE_PRIVATE)
                 adClickCount = adMeta.getInt("ad_click_count", 0)
                 banEndTime = adMeta.getLong("ban_end_time", 0)
-                val adType = adMeta.getString("ad_type", null)
-                val adMetaEditor = adMeta.edit()
-
 
                 val appMeta = getSharedPreferences("app_meta", Context.MODE_PRIVATE)
                 val appMetaEditor = appMeta.edit()
 
                 UPDATE_TYPE = appMeta.getInt("update_type", 1)
 
-
-                AD_TYPE = if (adType == null) {
-                    //default ad type
-                    AdType.ADMOB
-                } else {
-                    AdType.valueOf(adType)
-                }
 
                 val appRemoteConfig: FirebaseRemoteConfig = FirebaseRemoteConfig.getInstance()
 
@@ -169,31 +123,11 @@ class Application : BaseApplication() {
                                         UPDATE_TYPE = 1
                                     }
                                 }
-
-
-                                when (appRemoteConfig.getString("ad_type")) {
-
-                                    "ADMOB" -> {
-                                        adMetaEditor.putString("ad_type", AdType.ADMOB.toString())
-                                        adMetaEditor.commit()
-                                        AD_TYPE = AdType.ADMOB
-
-                                    }
-                                    else -> {
-                                        adMetaEditor.putString("ad_type", null)
-                                        adMetaEditor.commit()
-                                        AD_TYPE = null
-                                    }
-                                }
-
                             }
                         }
                     }
             }
 
         }
-
-
     }
-
 }

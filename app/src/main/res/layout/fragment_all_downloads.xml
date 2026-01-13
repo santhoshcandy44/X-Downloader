@@ -55,15 +55,12 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
 
-
             >
-
-            <androidx.cardview.widget.CardView
-                android:id="@+id/all_downloads_admob_native_ad"
+            <LinearLayout
+                android:id="@+id/banner_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:focusable="true"
-                android:foreground="?android:attr/selectableItemBackground"
+                android:orientation="vertical"
                 />
 
 
