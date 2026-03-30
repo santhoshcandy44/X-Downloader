@@ -43,9 +43,6 @@
             android:name=".PlayerActivity"
             android:configChanges="orientation|screenSize|layoutDirection"
             android:exported="false"
-            android:supportsPictureInPicture="false"
-            android:resizeableActivity="false"
-
             >
         </activity>
         <activity
@@ -54,10 +51,7 @@
 
             android:configChanges="orientation"
             android:exported="true"
-            android:screenOrientation="portrait"
             android:supportsPictureInPicture="false"
-            android:resizeableActivity="false"
-
             >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -71,9 +65,7 @@
             android:configChanges="orientation"
             android:exported="true"
             android:launchMode="singleTask"
-            android:screenOrientation="portrait"
             android:supportsPictureInPicture="false"
-            android:resizeableActivity="false"
             >
             <intent-filter>
 

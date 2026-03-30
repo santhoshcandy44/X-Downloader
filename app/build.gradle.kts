@@ -1,9 +1,9 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
     id("com.google.gms.google-services")
     id("com.google.devtools.ksp")
-    id ("kotlin-android")
 }
 
 android {
@@ -18,40 +18,44 @@ android {
         versionName = "1.2.9"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String" ,"BASE_URL","\"https://v2-x-api.25122022.xyz\"")
-        buildConfigField("String" ,"REFERER","\"com.x.twitter.video.downloader.referer\"")
+        buildConfigField("String", "BASE_URL", "\"https://v2-x-api.25122022.xyz\"")
+        buildConfigField("String", "REFERER", "\"com.x.twitter.video.downloader.referer\"")
     }
 
     buildTypes {
         release {
-            isMinifyEnabled =true
-            isShrinkResources =true
-            multiDexEnabled =false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
-
-        debug{
-            isMinifyEnabled=false
-            proguardFiles (getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
+        debug {
+            isMinifyEnabled = false
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
 
     buildFeatures {
-        buildConfig=true
-        viewBinding=true
+        buildConfig = true
+        viewBinding = true
+    }
+}
+
+
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
     }
 }
 
 dependencies {
 
-    implementation("androidx.core:core-ktx:1.17.0")
+    implementation("androidx.core:core-ktx:1.18.0")
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("com.google.android.material:material:1.13.0")
     testImplementation("junit:junit:4.13.2")
@@ -85,17 +89,17 @@ dependencies {
 
     implementation("com.github.ybq:Android-SpinKit:1.4.0")
 
-    implementation("androidx.media3:media3-exoplayer:1.8.0")
-    implementation("androidx.media3:media3-exoplayer-dash:1.8.0")
-    implementation("androidx.media3:media3-ui:1.8.0")
+    implementation("androidx.media3:media3-exoplayer:1.10.0")
+    implementation("androidx.media3:media3-exoplayer-dash:1.10.0")
+    implementation("androidx.media3:media3-ui:1.10.0")
 
     implementation("androidx.annotation:annotation:1.9.1")
 
     //facebook ads
-    implementation("com.facebook.android:audience-network-sdk:6.+")
+    implementation("com.facebook.android:audience-network-sdk:6.21.0")
 
     // Import the BoM for the Firebase platform
-    implementation(platform("com.google.firebase:firebase-bom:34.6.0"))
+    implementation(platform("com.google.firebase:firebase-bom:34.11.0"))
 
     // Add the dependencies for the Firebase Cloud Messaging and Analytics libraries
     // When using the BoM, you don't specify versions in Firebase library dependencies
@@ -104,21 +108,19 @@ dependencies {
     implementation ("com.google.firebase:firebase-config")
 
 
-    val lifecycle_version = "2.10.0"
-    implementation ("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version")
-    ksp("androidx.lifecycle:lifecycle-compiler:$lifecycle_version")
+    implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
+    ksp("androidx.lifecycle:lifecycle-compiler:2.10.0")
 
-    implementation ("androidx.activity:activity-ktx:1.12.0")
+    implementation ("androidx.activity:activity-ktx:1.13.0")
 
     implementation ("com.google.android.play:app-update:2.1.0")
     implementation ("com.google.android.play:app-update-ktx:2.1.0")
-    implementation ("org.jetbrains.kotlin:kotlin-script-runtime:2.2.10")
+    implementation ("org.jetbrains.kotlin:kotlin-script-runtime:2.3.10")
 
 
-    val room_version = "2.8.4"
 
-    implementation("androidx.room:room-runtime:$room_version")
-    ksp("androidx.room:room-compiler:$room_version")
+    implementation("androidx.room:room-runtime:2.8.4")
+    ksp("androidx.room:room-compiler:2.8.4")
     // optional - Kotlin extensions and Coroutines support for Room
-    implementation ("androidx.room:room-ktx:$room_version")
+    implementation ("androidx.room:room-ktx:2.8.4")
 }
